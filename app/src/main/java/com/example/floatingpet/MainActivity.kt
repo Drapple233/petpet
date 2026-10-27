@@ -9,7 +9,6 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.Gravity
-import android.view.View
 import android.widget.*
 
 class MainActivity : Activity() {
@@ -42,19 +41,21 @@ class MainActivity : Activity() {
         root.addView(actions)
         section(root, "桌宠外观")
         addSlider(root, "桌宠大小", 120, 320, prefs.getInt("size", 220), " px") { v -> save("size", v); updatePet() }
-        addSwitch(root, "锁定当前大小", "锁定后仍可拖动桌宠，但不会误触尺寸调整", prefs.getBoolean("sizeLocked", false)) { save("sizeLocked", it); updatePet() }
+        addSwitch(root, "锁定当前大小", "防止误触尺寸调整；桌宠位置由下方的位置调整模式控制", prefs.getBoolean("sizeLocked", false)) { save("sizeLocked", it); updatePet() }
+        addSwitch(root, "位置调整模式", "开启后可在桌宠上拖动它的位置；关闭后触摸桌宠只触发互动，不会拖动", prefs.getBoolean("moveMode", false)) { save("moveMode", it); updatePet() }
         section(root, "待机动作")
         addSlider(root, "呼吸幅度", 1, 16, prefs.getInt("breathAmp", 7), "") { v -> save("breathAmp", v); updatePet() }
-        addSlider(root, "呼吸速度", 4, 24, prefs.getInt("breathSpeed", 12), "") { v -> save("breathSpeed", v); updatePet() }
+        addSlider(root, "身体呼吸速度", 4, 24, prefs.getInt("breathSpeed", 12), "") { v -> save("breathSpeed", v); updatePet() }
+        addSlider(root, "头部呼吸速度", 4, 28, prefs.getInt("headBreathSpeed", 17), "") { v -> save("headBreathSpeed", v); updatePet() }
         addSlider(root, "头部晃动幅度", 2, 24, prefs.getInt("headAmp", 12), "°") { v -> save("headAmp", v); updatePet() }
         addSlider(root, "头部晃动频率", 4, 30, prefs.getInt("headSpeed", 15), "") { v -> save("headSpeed", v); updatePet() }
         section(root, "互动联动")
-        addSwitch(root, "音乐节奏联动", "根据系统媒体播放状态触发轻微节奏动作", prefs.getBoolean("musicEnabled", true)) { save("musicEnabled", it); if (it) openMediaSettingsIfNeeded(); updatePet() }
+        addSwitch(root, "音乐节奏联动", "播放音乐时加强头部点头和身体弹动；系统媒体授权后生效", prefs.getBoolean("musicEnabled", true)) { save("musicEnabled", it); if (it) openMediaSettingsIfNeeded(); updatePet() }
         val media = actionButton("开启音乐监听授权") { startActivity(Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS")) }
         root.addView(media, fullWidth())
-        addSwitch(root, "键盘联动", "检测输入界面事件，不读取、不保存键入内容", prefs.getBoolean("typingEnabled", false)) { save("typingEnabled", it); if (it) startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)); updatePet() }
+        addSwitch(root, "键盘联动", "检测粗略的输入界面事件，不读取、不保存键入内容", prefs.getBoolean("typingEnabled", false)) { save("typingEnabled", it); if (it) startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)); updatePet() }
         root.addView(TextView(this).apply {
-            text = "互动方式：轻点头部会弹一下；长按会持续按头，松手后弹回；触摸/拖动时头部会跟随指尖。首次使用需授予悬浮窗权限。\n\n说明：音乐节拍效果受播放器和 Android 系统支持限制；键盘联动需在辅助功能中手动开启。"
+            text = "互动台词：轻点、摸头、音乐和节拍分别使用独立随机台词池。\n\n说明：当前桌宠素材只有头部和身体两张图，闭眼/点击表情先用缩放与动作模拟；若要准确还原参考视频中的眼睛差分，请把视频录屏或截图上传到聊天。屏幕其他区域的手指跟随需要额外的全屏触摸监听能力，Android 普通悬浮窗无法直接读取其他应用的触摸坐标；我不会擅自启用可能改变触屏操作方式的辅助功能。"
             textSize = 12.5f; setTextColor(Color.rgb(102, 91, 117)); setPadding(dp(4), dp(16), dp(4), dp(6))
         })
         setContentView(scroll)
