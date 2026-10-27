@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">FloatingPet</string>
+    <string name="accessibility_description">仅检测键盘或输入界面是否出现，用于桌宠动画；不读取输入文字。</string>
+</resources>
