@@ -49,6 +49,7 @@ class PetOverlayService : Service() {
     private var pressLoop: Runnable? = null
     private var lastMediaTalk = 0L
     private var lastTypingTalk = 0L
+    private var lastBeatTalk = 0L
     private var lastLine = ""
 
     private val lines = mapOf(
@@ -275,7 +276,8 @@ class PetOverlayService : Service() {
         body?.animate()?.scaleX(1.045f)?.scaleY(1.055f)?.setDuration(100)?.withEndAction {
             body?.animate()?.scaleX(1f)?.scaleY(1f)?.setDuration(180)?.start()
         }?.start()
-        speak("beat")
+        val now = System.currentTimeMillis()
+        if (now - lastBeatTalk > 6500L) { lastBeatTalk = now; speak("beat") }
     }
 
     private fun typingPulse() {
