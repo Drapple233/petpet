@@ -235,7 +235,7 @@ class PetOverlayService : Service() {
 
     private fun startIdleAnimations() {
         val breath = prefs.getInt("breathAmp", 7).toFloat()
-        val bodyMs = (3100 - prefs.getInt("breathSpeed", 12) * 80).toLong().coerceAtLeast(700)
+        val bodyMs = (3300 - prefs.getInt("breathSpeed", 12) * 45).toLong().coerceIn(2400L, 3000L)
         bodyBreathAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
             duration = bodyMs; repeatCount = ValueAnimator.INFINITE; repeatMode = ValueAnimator.REVERSE; interpolator = AccelerateDecelerateInterpolator()
             addUpdateListener { a ->
@@ -246,14 +246,15 @@ class PetOverlayService : Service() {
             }
             start()
         }
-        val headMs = (2100 - prefs.getInt("headBreathSpeed", 17) * 55).toLong().coerceAtLeast(600)
+        val headBreath = prefs.getInt("headBreathAmp", 2).toFloat().coerceIn(1f, 4f)
+        val headMs = (2600 - prefs.getInt("headBreathSpeed", 14) * 45).toLong().coerceIn(1500L, 2300L)
         headBreathAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
             duration = headMs; repeatCount = ValueAnimator.INFINITE; repeatMode = ValueAnimator.REVERSE; interpolator = AccelerateDecelerateInterpolator()
             addUpdateListener { a ->
                 val t = a.animatedValue as Float
                 if (!longPressing && !moved) {
-                    head?.translationY = -dp((breath.coerceAtMost(3f) * .75f * t).toInt()).toFloat()
-                    head?.scaleY = 1f + .004f * t
+                    head?.translationY = -dp((headBreath * .65f * t).toInt()).toFloat()
+                    head?.scaleY = 1f + .003f * t
                 }
             }
             start()
