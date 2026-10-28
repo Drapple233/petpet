@@ -28,7 +28,13 @@ class MediaListenerService : NotificationListenerService() {
                 if (controller.playbackState?.state == PlaybackState.STATE_PLAYING) sendBroadcast(Intent(PetOverlayService.ACTION_MEDIA).setPackage(packageName))
             }
         }
-        try { controller.registerCallback(callback); callbacks[controller] = callback } catch (_: Exception) { }
+        try {
+            controller.registerCallback(callback)
+            callbacks[controller] = callback
+            if (controller.playbackState?.state == PlaybackState.STATE_PLAYING) {
+                sendBroadcast(Intent(PetOverlayService.ACTION_MEDIA).setPackage(packageName))
+            }
+        } catch (_: Exception) { }
     }
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         try { val manager = getSystemService(MEDIA_SESSION_SERVICE) as MediaSessionManager; manager.getActiveSessions(ComponentName(this, MediaListenerService::class.java)).forEach { if (!callbacks.containsKey(it)) attach(it) } } catch (_: SecurityException) { }
