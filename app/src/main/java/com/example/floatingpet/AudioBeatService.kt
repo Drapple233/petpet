@@ -29,7 +29,7 @@ class AudioBeatService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP) { stopSelf(); return START_NOT_STICKY }
         if (running) return START_STICKY
-        createNotification()
+        createNotification(intent)
         val sampleRate = 16000
         val minBuffer = AudioRecord.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)
         if (minBuffer <= 0) { stopSelf(); return START_NOT_STICKY }
@@ -80,11 +80,16 @@ class AudioBeatService : Service() {
         return START_STICKY
     }
 
-    private fun createNotification() {
+    private fun createNotification(intent: Intent?) {
         val channel = "pet_audio_capture"
         if (Build.VERSION.SDK_INT >= 26) getSystemService(NotificationManager::class.java).createNotificationChannel(NotificationChannel(channel, "桌宠音频节拍", NotificationManager.IMPORTANCE_LOW))
         val builder = if (Build.VERSION.SDK_INT >= 26) Notification.Builder(this, channel) else Notification.Builder(this)
-        startForeground(28, builder.setSmallIcon(android.R.drawable.ic_media_play).setContentTitle("FloatingPet 音频节拍检测").setContentText("仅本机分析音频，不保存录音").build())
+        val notification = builder.setSmallIcon(android.R.drawable.ic_media_play).setContentTitle("FloatingPet 音频节拍检测").setContentText("仅本机分析音频，不保存录音").build()
+        if (Build.VERSION.SDK_INT >= 29) {
+            val resultCode = intent?.getIntExtra(EXTRA_RESULT_CODE, 0) ?: 0
+            val type = if (resultCode != 0) android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION else android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+            startForeground(28, notification, type)
+        } else startForeground(28, notification)
     }
 
     override fun onDestroy() {
