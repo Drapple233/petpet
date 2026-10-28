@@ -298,13 +298,13 @@ class PetOverlayService : Service() {
         head?.animate()?.cancel()
         body?.animate()?.cancel()
         // Move head and body together through the final bounce to avoid a visible gap.
-        head?.animate()?.translationY(dp(1).toFloat())?.rotation(0f)?.scaleY(.99f)?.setDuration(90)?.withEndAction {
-            head?.animate()?.translationY(0f)?.scaleY(1f)?.setDuration(170)?.start()
+        head?.animate()?.translationY(dp(2).toFloat())?.rotation(0f)?.scaleY(.985f)?.setDuration(100)?.withEndAction {
+            head?.animate()?.translationY(0f)?.scaleY(1f)?.setDuration(190)?.start()
         }?.start()
-        body?.animate()?.translationY(dp(1).toFloat())?.setDuration(90)?.withEndAction {
-            body?.animate()?.translationY(0f)?.setDuration(170)?.start()
+        body?.animate()?.translationY(dp(1).toFloat()).setDuration(100).withEndAction {
+            body?.animate()?.translationY(0f)?.setDuration(190)?.start()
         }?.start()
-        handler.postDelayed({ interactionAnimating = false; startIdleAnimations() }, 280)
+        handler.postDelayed({ interactionAnimating = false; startIdleAnimations() }, 300)
     }
 
     private fun beatPulse(realBeat: Boolean = false) {
@@ -395,15 +395,15 @@ class PetOverlayService : Service() {
         head?.animate()?.cancel()
         body?.animate()?.cancel()
         // A restrained rebound: head and body travel in the same direction together.
-        val rebound = (0.7f + charge * 0.5f) * resources.displayMetrics.density
-        head?.animate()?.translationY(rebound)?.rotation(0f)?.scaleY(1.008f)?.scaleX(.998f)?.setDuration(120)?.withEndAction {
-            head?.animate()?.translationY(0f)?.scaleX(1f)?.scaleY(1f)?.setDuration(210)?.start()
+        val rebound = (1.5f + charge * 1.2f) * resources.displayMetrics.density
+        head?.animate()?.translationY(-rebound)?.rotation(0f)?.scaleY(1.015f)?.scaleX(.994f)?.setDuration(135)?.withEndAction {
+            head?.animate()?.translationY(0f)?.scaleX(1f)?.scaleY(1f)?.setDuration(230)?.start()
         }?.start()
-        body?.animate()?.translationY(rebound * .7f)?.setDuration(120)?.withEndAction {
-            body?.animate()?.translationY(0f)?.setDuration(210)?.start()
+        body?.animate()?.translationY(-rebound * .72f)?.setDuration(135)?.withEndAction {
+            body?.animate()?.translationY(0f)?.setDuration(230)?.start()
         }?.start()
         spawnEffect(if (charge > .55f) "♥" else "✦", .64f)
-        handler.postDelayed({ interactionAnimating = false; startIdleAnimations() }, 340)
+        handler.postDelayed({ interactionAnimating = false; startIdleAnimations() }, 370)
     }
 
     private fun speak(kind: String) {
