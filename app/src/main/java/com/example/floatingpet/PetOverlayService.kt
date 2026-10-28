@@ -24,6 +24,7 @@ class PetOverlayService : Service() {
     companion object {
         const val ACTION_SETTINGS = "com.example.floatingpet.SETTINGS"
         const val ACTION_MEDIA = "com.example.floatingpet.MEDIA"
+        const val ACTION_MEDIA_PAUSED = "com.example.floatingpet.MEDIA_PAUSED"
         const val ACTION_TYPING = "com.example.floatingpet.TYPING"
     }
     private val prefs by lazy { getSharedPreferences("pet_settings", MODE_PRIVATE) }
@@ -51,6 +52,9 @@ class PetOverlayService : Service() {
     private var lastTypingTalk = 0L
     private var lastBeatTalk = 0L
     private var lastLine = ""
+    private var mediaPlaying = false
+    private var mediaBeatRunnable: Runnable? = null
+    private var idleRandomRunnable: Runnable? = null
 
     private val lines = mapOf(
         "tap" to listOf("欸？叫我吗！", "看见你啦。", "怎么啦怎么啦？", "戳我做什么呀。", "我在这里哦。", "哼，才不是在等你。", "再点一下试试？", "今天也要陪着我哦。"),
@@ -65,12 +69,18 @@ class PetOverlayService : Service() {
             when (i?.action) {
                 ACTION_SETTINGS -> applySettings()
                 ACTION_MEDIA -> if (prefs.getBoolean("musicEnabled", true)) {
-                    beatPulse()
-                    val now = System.currentTimeMillis()
-                    if (now - lastMediaTalk > 12000L) {
-                        lastMediaTalk = now
-                        speak("music")
+                    val wasPlaying = mediaPlaying
+                    mediaPlaying = true
+                    if (!wasPlaying) {
+                        val now = System.currentTimeMillis()
+                        if (now - lastMediaTalk > 12000L) { lastMediaTalk = now; speak("music") }
+                        startEstimatedBeatLoop()
                     }
+                }
+                ACTION_MEDIA_PAUSED -> {
+                    mediaPlaying = false
+                    handler.removeCallbacks(mediaBeatRunnable ?: Runnable {})
+                    mediaBeatRunnable = null
                 }
                 ACTION_TYPING -> if (prefs.getBoolean("typingEnabled", false)) {
                     val visible = i.getBooleanExtra("visible", false)
@@ -89,7 +99,7 @@ class PetOverlayService : Service() {
         super.onCreate()
         createNotification()
         showPet()
-        val f = IntentFilter().apply { addAction(ACTION_SETTINGS); addAction(ACTION_MEDIA); addAction(ACTION_TYPING) }
+        val f = IntentFilter().apply { addAction(ACTION_SETTINGS); addAction(ACTION_MEDIA); addAction(ACTION_MEDIA_PAUSED); addAction(ACTION_TYPING) }
         if (Build.VERSION.SDK_INT >= 33) registerReceiver(settingsReceiver, f, RECEIVER_NOT_EXPORTED)
         else @Suppress("DEPRECATION") registerReceiver(settingsReceiver, f)
     }
@@ -142,7 +152,7 @@ class PetOverlayService : Service() {
                     head?.pivotY = (head?.height ?: size / 2) * .82f
                     pressRunnable = Runnable {
                         longPressing = true
-                        if (!moveMode) { beginPressLoop(); speak("pat") }
+                        if (!moveMode) { beginPressLoop(); speak("pat"); spawnEffect("♡", .58f) }
                     }
                     handler.postDelayed(pressRunnable!!, 420)
                     true
@@ -170,7 +180,7 @@ class PetOverlayService : Service() {
                     if (moveMode) {
                         prefs.edit().putInt("petX", params.x).putInt("petY", params.y).apply()
                     } else if (!moved && !longPressing) {
-                        speak("tap"); pressHead()
+                        speak("tap"); pressHead(); spawnEffect(listOf("💗", "✦", "♡", "✨").random(), .72f)
                     }
                     longPressing = false
                     head?.animate()?.rotation(0f)?.translationX(0f)?.translationY(0f)?.setDuration(220)?.start()
@@ -182,6 +192,7 @@ class PetOverlayService : Service() {
         container = frame
         wm.addView(frame, params)
         startIdleAnimations()
+        scheduleRandomIdleAction()
     }
 
     private fun applySettings() {
@@ -201,6 +212,7 @@ class PetOverlayService : Service() {
         try { wm.updateViewLayout(frame, params) } catch (_: Exception) {}
         bodyBreathAnimator?.cancel(); headBreathAnimator?.cancel(); idleAnimator?.cancel()
         startIdleAnimations()
+        scheduleRandomIdleAction()
     }
 
     private fun startIdleAnimations() {
@@ -280,6 +292,56 @@ class PetOverlayService : Service() {
         if (now - lastBeatTalk > 6500L) { lastBeatTalk = now; speak("beat") }
     }
 
+    private fun startEstimatedBeatLoop() {
+        handler.removeCallbacks(mediaBeatRunnable ?: Runnable {})
+        mediaBeatRunnable = object : Runnable {
+            override fun run() {
+                if (!mediaPlaying || !prefs.getBoolean("musicEnabled", true) || container == null) return
+                beatPulse()
+                if (Random.nextInt(4) == 0) spawnEffect(listOf("♪", "♫", "✦").random(), .48f)
+                handler.postDelayed(this, Random.nextLong(470L, 760L))
+            }
+        }
+        handler.post(mediaBeatRunnable!!)
+    }
+
+    private fun scheduleRandomIdleAction() {
+        handler.removeCallbacks(idleRandomRunnable ?: Runnable {})
+        idleRandomRunnable = object : Runnable {
+            override fun run() {
+                if (container == null) return
+                if (!moved && !longPressing && !mediaPlaying) {
+                    when (Random.nextInt(4)) {
+                        0 -> head?.animate()?.rotationBy(if (Random.nextBoolean()) 5f else -5f)?.setDuration(260)?.withEndAction { head?.animate()?.rotation(0f)?.setDuration(300)?.start() }?.start()
+                        1 -> body?.animate()?.translationY(-dp(5).toFloat())?.setDuration(220)?.withEndAction { body?.animate()?.translationY(0f)?.setDuration(300)?.start() }?.start()
+                        2 -> head?.animate()?.translationY(-dp(3).toFloat())?.setDuration(300)?.withEndAction { head?.animate()?.translationY(0f)?.setDuration(360)?.start() }?.start()
+                        else -> spawnEffect(listOf("✦", "·", "♡").random(), .42f)
+                    }
+                }
+                handler.postDelayed(this, Random.nextLong(6500L, 12500L))
+            }
+        }
+        handler.postDelayed(idleRandomRunnable!!, Random.nextLong(4500L, 9000L))
+    }
+
+    private fun spawnEffect(symbol: String, horizontalPosition: Float) {
+        val frame = container ?: return
+        val size = dp(if (symbol.length > 1) 25 else 29)
+        val effect = TextView(this).apply {
+            text = symbol
+            textSize = if (symbol == "·") 20f else 23f
+            gravity = Gravity.CENTER
+            setTextColor(Color.rgb(143, 111, 210))
+            alpha = 0f
+        }
+        val x = (frame.width.coerceAtLeast(dp(120)) * horizontalPosition).toInt().coerceIn(0, frame.width.coerceAtLeast(dp(120)) - size)
+        val y = dp(65) + Random.nextInt(0, dp(65).coerceAtLeast(1))
+        frame.addView(effect, FrameLayout.LayoutParams(size, size).apply { leftMargin = x; topMargin = y })
+        effect.animate().alpha(1f).translationY(-dp(38).toFloat()).scaleX(1.18f).scaleY(1.18f).setDuration(180).withEndAction {
+            effect.animate().alpha(0f).setDuration(360).withEndAction { frame.removeView(effect) }.start()
+        }.start()
+    }
+
     private fun typingPulse() {
         head?.animate()?.translationY(dp(7).toFloat())?.setDuration(90)?.withEndAction {
             head?.animate()?.translationY(0f)?.setDuration(140)?.start()
@@ -312,6 +374,7 @@ class PetOverlayService : Service() {
     override fun onDestroy() {
         try { unregisterReceiver(settingsReceiver) } catch (_: Exception) {}
         handler.removeCallbacksAndMessages(null)
+        mediaPlaying = false
         bodyBreathAnimator?.cancel(); headBreathAnimator?.cancel(); idleAnimator?.cancel()
         container?.let { try { wm.removeView(it) } catch (_: Exception) {} }
         container = null
