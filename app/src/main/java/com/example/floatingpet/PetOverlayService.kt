@@ -301,7 +301,7 @@ class PetOverlayService : Service() {
         head?.animate()?.translationY(dp(2).toFloat())?.rotation(0f)?.scaleY(.985f)?.setDuration(100)?.withEndAction {
             head?.animate()?.translationY(0f)?.scaleY(1f)?.setDuration(190)?.start()
         }?.start()
-        body?.animate()?.translationY(dp(1).toFloat()).setDuration(100).withEndAction {
+        body?.animate()?.translationY(dp(1).toFloat())?.setDuration(100)?.withEndAction {
             body?.animate()?.translationY(0f)?.setDuration(190)?.start()
         }?.start()
         handler.postDelayed({ interactionAnimating = false; startIdleAnimations() }, 300)
