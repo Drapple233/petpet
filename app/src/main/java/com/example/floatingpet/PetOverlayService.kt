@@ -25,6 +25,7 @@ class PetOverlayService : Service() {
         const val ACTION_SETTINGS = "com.example.floatingpet.SETTINGS"
         const val ACTION_MEDIA = "com.example.floatingpet.MEDIA"
         const val ACTION_MEDIA_PAUSED = "com.example.floatingpet.MEDIA_PAUSED"
+        const val ACTION_AUDIO_BEAT = "com.example.floatingpet.AUDIO_BEAT"
         const val ACTION_TYPING = "com.example.floatingpet.TYPING"
     }
     private val prefs by lazy { getSharedPreferences("pet_settings", MODE_PRIVATE) }
@@ -55,6 +56,8 @@ class PetOverlayService : Service() {
     private var mediaPlaying = false
     private var mediaBeatRunnable: Runnable? = null
     private var idleRandomRunnable: Runnable? = null
+    private var pressStartedAt = 0L
+    private var lastKeyPulse = 0L
 
     private val lines = mapOf(
         "tap" to listOf("欸？叫我吗！", "看见你啦。", "怎么啦怎么啦？", "戳我做什么呀。", "我在这里哦。", "哼，才不是在等你。", "再点一下试试？", "今天也要陪着我哦。"),
@@ -82,6 +85,10 @@ class PetOverlayService : Service() {
                     handler.removeCallbacks(mediaBeatRunnable ?: Runnable {})
                     mediaBeatRunnable = null
                 }
+                ACTION_AUDIO_BEAT -> if (prefs.getBoolean("musicEnabled", true)) {
+                    mediaPlaying = true
+                    beatPulse(true)
+                }
                 ACTION_TYPING -> if (prefs.getBoolean("typingEnabled", false)) {
                     val visible = i.getBooleanExtra("visible", false)
                     if (visible && !typing) {
@@ -91,6 +98,12 @@ class PetOverlayService : Service() {
                     }
                     typing = visible
                 }
+                "com.example.floatingpet.KEY_PULSE" -> {
+                    if (prefs.getBoolean("typingEnabled", false)) {
+                        val now = System.currentTimeMillis()
+                        if (now - lastKeyPulse > 38L) { lastKeyPulse = now; typingPulse() }
+                    }
+                }
             }
         }
     }
@@ -99,7 +112,7 @@ class PetOverlayService : Service() {
         super.onCreate()
         createNotification()
         showPet()
-        val f = IntentFilter().apply { addAction(ACTION_SETTINGS); addAction(ACTION_MEDIA); addAction(ACTION_MEDIA_PAUSED); addAction(ACTION_TYPING) }
+        val f = IntentFilter().apply { addAction(ACTION_SETTINGS); addAction(ACTION_MEDIA); addAction(ACTION_MEDIA_PAUSED); addAction(ACTION_AUDIO_BEAT); addAction(ACTION_TYPING); addAction("com.example.floatingpet.KEY_PULSE") }
         if (Build.VERSION.SDK_INT >= 33) registerReceiver(settingsReceiver, f, RECEIVER_NOT_EXPORTED)
         else @Suppress("DEPRECATION") registerReceiver(settingsReceiver, f)
     }
@@ -123,7 +136,7 @@ class PetOverlayService : Service() {
         wm = getSystemService(WINDOW_SERVICE) as WindowManager
         val size = prefs.getInt("size", 220)
         val type = if (Build.VERSION.SDK_INT >= 26) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY else WindowManager.LayoutParams.TYPE_PHONE
-        params = WindowManager.LayoutParams(size, (size * 1.18f).toInt(), type, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN, PixelFormat.TRANSLUCENT).apply { gravity = Gravity.TOP or Gravity.START; x = 60; y = 220 }
+        params = WindowManager.LayoutParams((size * 1.30f).toInt(), (size * 1.62f).toInt(), type, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN, PixelFormat.TRANSLUCENT).apply { gravity = Gravity.TOP or Gravity.START; x = 40; y = 100 }
         val frame = FrameLayout(this)
         body = ImageView(this).apply {
             setImageDrawable(android.graphics.drawable.Drawable.createFromStream(assets.open("mascot_body.png"), null))
@@ -135,14 +148,15 @@ class PetOverlayService : Service() {
         }
         speech = TextView(this).apply {
             textSize = 12f; setTextColor(Color.WHITE); gravity = Gravity.CENTER
-            setPadding(dp(10), dp(6), dp(10), dp(6))
-            background = GradientDrawable().apply { setColor(Color.rgb(67, 51, 88)); cornerRadius = dp(14).toFloat() }
+            setPadding(dp(12), dp(8), dp(12), dp(8))
+            setTextColor(Color.rgb(92, 83, 66))
+            background = GradientDrawable().apply { setColor(Color.rgb(255, 251, 232)); cornerRadius = dp(20).toFloat(); setStroke(dp(2), Color.rgb(171, 222, 217)) }
             visibility = android.view.View.GONE
             maxLines = 2
         }
-        frame.addView(body, FrameLayout.LayoutParams(size, size, Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL))
-        frame.addView(head, FrameLayout.LayoutParams((size * .82f).toInt(), (size * .7f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = (size * .025f).toInt() })
-        frame.addView(speech, FrameLayout.LayoutParams(-2, -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(2) })
+        frame.addView(body, FrameLayout.LayoutParams(size, size, Gravity.CENTER_HORIZONTAL or Gravity.TOP).apply { topMargin = (size * .52f).toInt() })
+        frame.addView(head, FrameLayout.LayoutParams((size * .82f).toInt(), (size * .7f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = (size * .25f).toInt() })
+        frame.addView(speech, FrameLayout.LayoutParams((size * 1.22f).toInt().coerceAtMost((size * 1.28f).toInt()), -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(2) })
         frame.setOnTouchListener { _, e ->
             when (e.action) {
                 MotionEvent.ACTION_DOWN -> {
@@ -150,6 +164,7 @@ class PetOverlayService : Service() {
                     moved = false; longPressing = false
                     head?.pivotX = (head?.width ?: size / 2) / 2f
                     head?.pivotY = (head?.height ?: size / 2) * .82f
+                    pressStartedAt = System.currentTimeMillis()
                     pressRunnable = Runnable {
                         longPressing = true
                         if (!moveMode) { beginPressLoop(); speak("pat"); spawnEffect("♡", .58f) }
@@ -166,9 +181,9 @@ class PetOverlayService : Service() {
                             params.x = startX + dx.toInt(); params.y = startY + dy.toInt()
                             try { wm.updateViewLayout(frame, params) } catch (_: Exception) {}
                         } else {
-                            head?.rotation = (dx / 3.2f).coerceIn(-36f, 36f)
-                            head?.translationX = (dx * .38f).coerceIn(-size * .24f, size * .24f)
-                            head?.translationY = (dy * .28f).coerceIn(-size * .18f, size * .18f)
+                            head?.rotation = (dx / 18f).coerceIn(-7f, 7f)
+                            head?.translationX = (dx * .035f).coerceIn(-dp(5).toFloat(), dp(5).toFloat())
+                            head?.translationY = (dy * .025f).coerceIn(-dp(4).toFloat(), dp(4).toFloat())
                         }
                     }
                     true
@@ -177,13 +192,16 @@ class PetOverlayService : Service() {
                     handler.removeCallbacks(pressRunnable ?: Runnable {})
                     handler.removeCallbacks(pressLoop ?: Runnable {})
                     pressLoop = null
+                    val wasLongPress = longPressing
                     if (moveMode) {
                         prefs.edit().putInt("petX", params.x).putInt("petY", params.y).apply()
-                    } else if (!moved && !longPressing) {
-                        speak("tap"); pressHead(); spawnEffect(listOf("💗", "✦", "♡", "✨").random(), .72f)
+                    } else if (wasLongPress) {
+                        releasePat()
+                    } else if (!moved) {
+                        speak("tap"); pressHead(); spawnEffect(listOf("♡", "✦", "✧", "♥").random(), .72f)
                     }
                     longPressing = false
-                    head?.animate()?.rotation(0f)?.translationX(0f)?.translationY(0f)?.setDuration(220)?.start()
+                    head?.animate()?.rotation(0f)?.translationX(0f)?.translationY(0f)?.setDuration(280)?.start()
                     true
                 }
                 else -> true
@@ -199,15 +217,15 @@ class PetOverlayService : Service() {
         val frame = container ?: return
         val size = prefs.getInt("size", 220)
         moveMode = prefs.getBoolean("moveMode", false)
-        if (params.width != size || params.height != (size * 1.18f).toInt()) {
-            params.width = size; params.height = (size * 1.18f).toInt()
+        if (params.width != (size * 1.30f).toInt() || params.height != (size * 1.62f).toInt()) {
+            params.width = (size * 1.30f).toInt(); params.height = (size * 1.62f).toInt()
             try { wm.updateViewLayout(frame, params) } catch (_: Exception) {}
         }
         if (prefs.contains("petX")) params.x = prefs.getInt("petX", params.x)
         if (prefs.contains("petY")) params.y = prefs.getInt("petY", params.y)
-        body?.layoutParams = FrameLayout.LayoutParams(size, size, Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL)
-        head?.layoutParams = FrameLayout.LayoutParams((size * .82f).toInt(), (size * .7f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = (size * .025f).toInt() }
-        speech?.layoutParams = FrameLayout.LayoutParams(-2, -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(2) }
+        body?.layoutParams = FrameLayout.LayoutParams(size, size, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = (size * .52f).toInt() }
+        head?.layoutParams = FrameLayout.LayoutParams((size * .82f).toInt(), (size * .7f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = (size * .25f).toInt() }
+        speech?.layoutParams = FrameLayout.LayoutParams((size * 1.22f).toInt(), -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(2) }
         body?.requestLayout(); head?.requestLayout()
         try { wm.updateViewLayout(frame, params) } catch (_: Exception) {}
         bodyBreathAnimator?.cancel(); headBreathAnimator?.cancel(); idleAnimator?.cancel()
@@ -234,13 +252,13 @@ class PetOverlayService : Service() {
             addUpdateListener { a ->
                 val t = a.animatedValue as Float
                 if (!longPressing && !moved) {
-                    head?.translationY = -breath * .58f * t
-                    head?.scaleY = 1f + .022f * t
+                    head?.translationY = -breath * .85f * t
+                    head?.scaleY = 1f + .012f * t
                 }
             }
             start()
         }
-        val amp = prefs.getInt("headAmp", 12).toFloat()
+        val amp = prefs.getInt("headAmp", 4).toFloat().coerceAtMost(4.5f)
         val speed = prefs.getInt("headSpeed", 15)
         val duration = (3300 - speed * 85).toLong().coerceAtLeast(500)
         idleAnimator = ValueAnimator.ofFloat(-1f, 1f).apply {
@@ -254,9 +272,14 @@ class PetOverlayService : Service() {
         pressLoop = object : Runnable {
             override fun run() {
                 if (longPressing && !moveMode) {
-                    head?.translationY = (prefs.getInt("headAmp", 12) * 1.65f).coerceAtLeast(10f)
-                    head?.scaleY = .94f
-                    handler.postDelayed(this, 55)
+                    val elapsed = (System.currentTimeMillis() - pressStartedAt).coerceAtLeast(0L)
+                    val charge = (elapsed / 1100f).coerceIn(0f, 1f)
+                    val wobble = kotlin.math.sin(elapsed / 62.0).toFloat() * (1.0f + charge * 2.4f)
+                    head?.translationY = dp(2 + (charge * 13f).toInt()).toFloat()
+                    head?.rotation = wobble.coerceIn(-4.5f, 4.5f)
+                    head?.scaleY = 1f - charge * .075f
+                    head?.scaleX = 1f + charge * .025f
+                    handler.postDelayed(this, 32)
                 }
             }
         }
@@ -278,15 +301,16 @@ class PetOverlayService : Service() {
         }?.start()
     }
 
-    private fun beatPulse() {
+    private fun beatPulse(realBeat: Boolean = false) {
         head?.animate()?.cancel()
-        head?.animate()?.translationY(dp(9).toFloat())?.rotation(5f)?.setDuration(100)?.withEndAction {
-            head?.animate()?.translationY(0f)?.rotation(-3f)?.setDuration(110)?.withEndAction {
-                head?.animate()?.rotation(0f)?.setDuration(100)?.start()
+        val drop = if (realBeat) dp(7).toFloat() else dp(4).toFloat()
+        head?.animate()?.translationY(drop)?.rotation(2.2f)?.setDuration(85)?.withEndAction {
+            head?.animate()?.translationY(-dp(2).toFloat())?.rotation(-1.4f)?.setDuration(95)?.withEndAction {
+                head?.animate()?.translationY(0f)?.rotation(0f)?.setDuration(110)?.start()
             }?.start()
         }?.start()
-        body?.animate()?.scaleX(1.045f)?.scaleY(1.055f)?.setDuration(100)?.withEndAction {
-            body?.animate()?.scaleX(1f)?.scaleY(1f)?.setDuration(180)?.start()
+        body?.animate()?.scaleX(1.018f)?.scaleY(1.025f)?.setDuration(95)?.withEndAction {
+            body?.animate()?.scaleX(1f)?.scaleY(1f)?.setDuration(160)?.start()
         }?.start()
         val now = System.currentTimeMillis()
         if (now - lastBeatTalk > 6500L) { lastBeatTalk = now; speak("beat") }
@@ -331,11 +355,13 @@ class PetOverlayService : Service() {
             text = symbol
             textSize = if (symbol == "·") 20f else 23f
             gravity = Gravity.CENTER
-            setTextColor(Color.rgb(143, 111, 210))
+            setTextColor(when (symbol) { "♡", "♥" -> Color.rgb(239, 143, 166); "♪", "♫" -> Color.rgb(101, 178, 222); else -> Color.rgb(240, 190, 104) })
             alpha = 0f
         }
-        val x = (frame.width.coerceAtLeast(dp(120)) * horizontalPosition).toInt().coerceIn(0, frame.width.coerceAtLeast(dp(120)) - size)
-        val y = dp(65) + Random.nextInt(0, dp(65).coerceAtLeast(1))
+        val safeWidth = frame.width.coerceAtLeast(dp(120))
+        val safeHeight = frame.height.coerceAtLeast(dp(180))
+        val x = (safeWidth * horizontalPosition).toInt().coerceIn(dp(4), (safeWidth - size - dp(4)).coerceAtLeast(dp(4)))
+        val y = (safeHeight * Random.nextDouble(.34, .68)).toInt().coerceIn(dp(55), (safeHeight - size - dp(12)).coerceAtLeast(dp(60)))
         frame.addView(effect, FrameLayout.LayoutParams(size, size).apply { leftMargin = x; topMargin = y })
         effect.animate().alpha(1f).translationY(-dp(38).toFloat()).scaleX(1.18f).scaleY(1.18f).setDuration(180).withEndAction {
             effect.animate().alpha(0f).setDuration(360).withEndAction { frame.removeView(effect) }.start()
@@ -343,12 +369,26 @@ class PetOverlayService : Service() {
     }
 
     private fun typingPulse() {
-        head?.animate()?.translationY(dp(7).toFloat())?.setDuration(90)?.withEndAction {
-            head?.animate()?.translationY(0f)?.setDuration(140)?.start()
+        head?.animate()?.cancel()
+        head?.animate()?.translationY(dp(5).toFloat())?.rotation(1.2f)?.setDuration(48)?.withEndAction {
+            head?.animate()?.translationY(0f)?.rotation(0f)?.setDuration(95)?.start()
         }?.start()
-        body?.animate()?.translationY(-dp(4).toFloat())?.setDuration(100)?.withEndAction {
-            body?.animate()?.translationY(0f)?.setDuration(160)?.start()
+        body?.animate()?.translationY(-dp(2).toFloat())?.setDuration(55)?.withEndAction {
+            body?.animate()?.translationY(0f)?.setDuration(100)?.start()
         }?.start()
+    }
+
+    private fun releasePat() {
+        handler.removeCallbacks(pressLoop ?: Runnable {})
+        val charge = ((System.currentTimeMillis() - pressStartedAt) / 1100f).coerceIn(0f, 1f)
+        head?.animate()?.cancel()
+        head?.animate()?.translationY(-dp((5 + charge * 10).toInt()).toFloat())?.rotation(0f)?.scaleY(1.08f)?.scaleX(.97f)?.setDuration(100)?.withEndAction {
+            head?.animate()?.translationY(0f)?.scaleX(1f)?.scaleY(1f)?.setDuration(220)?.start()
+        }?.start()
+        body?.animate()?.translationY(-dp((3 + charge * 4).toInt()).toFloat())?.setDuration(100)?.withEndAction {
+            body?.animate()?.translationY(0f)?.setDuration(220)?.start()
+        }?.start()
+        spawnEffect(if (charge > .55f) "♥" else "✦", .64f)
     }
 
     private fun speak(kind: String) {
@@ -375,6 +415,8 @@ class PetOverlayService : Service() {
         try { unregisterReceiver(settingsReceiver) } catch (_: Exception) {}
         handler.removeCallbacksAndMessages(null)
         mediaPlaying = false
+        mediaBeatRunnable = null
+        idleRandomRunnable = null
         bodyBreathAnimator?.cancel(); headBreathAnimator?.cancel(); idleAnimator?.cancel()
         container?.let { try { wm.removeView(it) } catch (_: Exception) {} }
         container = null
