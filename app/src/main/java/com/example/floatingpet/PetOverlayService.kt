@@ -240,7 +240,7 @@ class PetOverlayService : Service() {
             duration = bodyMs; repeatCount = ValueAnimator.INFINITE; repeatMode = ValueAnimator.REVERSE; interpolator = AccelerateDecelerateInterpolator()
             addUpdateListener { a ->
                 val t = a.animatedValue as Float
-                body?.translationY = -breath * 1.35f * t
+                body?.translationY = -dp((breath * 1.15f * t).toInt()).toFloat()
                 body?.scaleY = 1f + .055f * t
                 body?.scaleX = 1f + .018f * t
             }
@@ -252,7 +252,7 @@ class PetOverlayService : Service() {
             addUpdateListener { a ->
                 val t = a.animatedValue as Float
                 if (!longPressing && !moved) {
-                    head?.translationY = -breath * .85f * t
+                    head?.translationY = -dp((breath * .7f * t).toInt()).toFloat()
                     head?.scaleY = 1f + .012f * t
                 }
             }
