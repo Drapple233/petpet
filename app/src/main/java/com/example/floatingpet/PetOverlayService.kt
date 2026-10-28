@@ -275,12 +275,15 @@ class PetOverlayService : Service() {
                 if (longPressing && !moveMode) {
                     val elapsed = (System.currentTimeMillis() - pressStartedAt).coerceAtLeast(0L)
                     val charge = (elapsed / 1100f).coerceIn(0f, 1f)
-                    val wobble = kotlin.math.sin(elapsed / 190.0).toFloat() * (0.35f + charge * 0.65f)
-                    // Keep the head anchored to the body: tiny downward compression only.
-                    head?.translationY = charge * 3f * resources.displayMetrics.density
-                    head?.rotation = wobble.coerceIn(-1.0f, 1.0f)
-                    head?.scaleY = 1f - charge * .018f
-                    head?.scaleX = 1f + charge * .008f
+                    // Fast, tight trembling builds as the hold continues; keep vertical travel tiny
+                    // so the head stays visually connected to the body.
+                    val tremble = kotlin.math.sin(elapsed / 34.0).toFloat()
+                    val density = resources.displayMetrics.density
+                    head?.translationY = (0.35f + charge * 0.55f + tremble * (0.25f + charge * 0.55f)) * density
+                    head?.rotation = tremble * (0.7f + charge * 1.5f)
+                    head?.scaleY = 1f - charge * .008f
+                    head?.scaleX = 1f + charge * .004f
+                    body?.translationY = (tremble * 0.18f * charge) * density
                     handler.postDelayed(this, 16)
                 }
             }
@@ -294,15 +297,14 @@ class PetOverlayService : Service() {
         bodyBreathAnimator?.cancel(); headBreathAnimator?.cancel()
         head?.animate()?.cancel()
         body?.animate()?.cancel()
-        head?.animate()?.translationY(dp(4).toFloat())?.rotation(0f)?.scaleY(.97f)?.setDuration(110)?.withEndAction {
-            head?.animate()?.translationY(-dp(2).toFloat())?.scaleY(1.015f)?.setDuration(150)?.withEndAction {
-                head?.animate()?.scaleY(1f)?.setDuration(130)?.start()
-            }?.start()
-            body?.animate()?.translationY(-dp(2).toFloat())?.setDuration(120)?.withEndAction {
-                body?.animate()?.translationY(0f)?.setDuration(220)?.start()
-            }?.start()
-            handler.postDelayed({ interactionAnimating = false; startIdleAnimations() }, 420)
+        // Move head and body together through the final bounce to avoid a visible gap.
+        head?.animate()?.translationY(dp(1).toFloat())?.rotation(0f)?.scaleY(.99f)?.setDuration(90)?.withEndAction {
+            head?.animate()?.translationY(0f)?.scaleY(1f)?.setDuration(170)?.start()
         }?.start()
+        body?.animate()?.translationY(dp(1).toFloat())?.setDuration(90)?.withEndAction {
+            body?.animate()?.translationY(0f)?.setDuration(170)?.start()
+        }?.start()
+        handler.postDelayed({ interactionAnimating = false; startIdleAnimations() }, 280)
     }
 
     private fun beatPulse(realBeat: Boolean = false) {
@@ -391,14 +393,17 @@ class PetOverlayService : Service() {
         bodyBreathAnimator?.cancel(); headBreathAnimator?.cancel()
         val charge = ((System.currentTimeMillis() - pressStartedAt) / 1100f).coerceIn(0f, 1f)
         head?.animate()?.cancel()
-        head?.animate()?.translationY(-dp((2 + charge * 4).toInt()).toFloat())?.rotation(0f)?.scaleY(1.025f)?.scaleX(.99f)?.setDuration(180)?.withEndAction {
-            head?.animate()?.translationY(0f)?.scaleX(1f)?.scaleY(1f)?.setDuration(320)?.start()
+        body?.animate()?.cancel()
+        // A restrained rebound: head and body travel in the same direction together.
+        val rebound = (0.7f + charge * 0.5f) * resources.displayMetrics.density
+        head?.animate()?.translationY(rebound)?.rotation(0f)?.scaleY(1.008f)?.scaleX(.998f)?.setDuration(120)?.withEndAction {
+            head?.animate()?.translationY(0f)?.scaleX(1f)?.scaleY(1f)?.setDuration(210)?.start()
         }?.start()
-        body?.animate()?.translationY(-dp(1).toFloat())?.setDuration(180)?.withEndAction {
-            body?.animate()?.translationY(0f)?.setDuration(320)?.start()
+        body?.animate()?.translationY(rebound * .7f)?.setDuration(120)?.withEndAction {
+            body?.animate()?.translationY(0f)?.setDuration(210)?.start()
         }?.start()
         spawnEffect(if (charge > .55f) "♥" else "✦", .64f)
-        handler.postDelayed({ interactionAnimating = false; startIdleAnimations() }, 540)
+        handler.postDelayed({ interactionAnimating = false; startIdleAnimations() }, 340)
     }
 
     private fun speak(kind: String) {
