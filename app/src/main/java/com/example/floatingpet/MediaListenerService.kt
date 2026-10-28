@@ -21,7 +21,8 @@ class MediaListenerService : NotificationListenerService() {
     private fun attach(controller: MediaController) {
         val callback = object : MediaController.Callback() {
             override fun onPlaybackStateChanged(state: PlaybackState?) {
-                if (state?.state == PlaybackState.STATE_PLAYING) sendBroadcast(Intent(PetOverlayService.ACTION_MEDIA).setPackage(packageName))
+                val action = if (state?.state == PlaybackState.STATE_PLAYING) PetOverlayService.ACTION_MEDIA else PetOverlayService.ACTION_MEDIA_PAUSED
+                sendBroadcast(Intent(action).setPackage(packageName))
             }
             override fun onMetadataChanged(metadata: android.media.MediaMetadata?) {
                 if (controller.playbackState?.state == PlaybackState.STATE_PLAYING) sendBroadcast(Intent(PetOverlayService.ACTION_MEDIA).setPackage(packageName))
