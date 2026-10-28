@@ -26,20 +26,20 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        window.statusBarColor = Color.rgb(218, 241, 246)
-        window.navigationBarColor = Color.rgb(218, 241, 246)
+        window.statusBarColor = Color.WHITE
+        window.navigationBarColor = Color.WHITE
         window.decorView.systemUiVisibility = 0
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(16), dp(14), dp(16), dp(24))
-            background = GradientDrawable(GradientDrawable.Orientation.TL_BR, intArrayOf(Color.rgb(230, 248, 250), Color.rgb(255, 245, 230), Color.rgb(250, 235, 242)))
+            background = GradientDrawable(GradientDrawable.Orientation.TL_BR, intArrayOf(Color.WHITE, Color.rgb(255, 253, 250), Color.rgb(248, 253, 252)))
         }
         val scroll = ScrollView(this).apply { clipToPadding = false; addView(root) }
         val hero = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_VERTICAL
             setPadding(dp(20), dp(22), dp(20), dp(20))
-            background = rounded(Color.rgb(255,255,248), pink, 3, 26)
+            background = rounded(Color.WHITE, pink, 2, 26)
         }
         hero.addView(TextView(this).apply { text = "✿  FloatingPet  ✿"; textSize = 27f; setTextColor(Color.rgb(93, 151, 169)); typeface = Typeface.create("sans-serif-rounded", Typeface.BOLD) })
         hero.addView(TextView(this).apply { text = "小小的陪伴，也要软乎乎的。  ♡"; textSize = 14f; setTextColor(ink); setPadding(0, dp(7), 0, 0) })
@@ -59,10 +59,10 @@ class MainActivity : Activity() {
         addSwitch(root, "锁定当前大小", "避免误操作调整尺寸", prefs.getBoolean("sizeLocked", false), pink) { save("sizeLocked", it); updatePet() }
 
         section(root, "☁  自然待机动作", mint)
-        addSlider(root, "身体呼吸幅度", 1, 12, prefs.getInt("breathAmp", 5), "", mint) { save("breathAmp", it); updatePet() }
-        addSlider(root, "身体呼吸速度", 4, 24, prefs.getInt("breathSpeed", 12), "", mint) { save("breathSpeed", it); updatePet() }
-        addSlider(root, "头部呼吸速度", 4, 28, prefs.getInt("headBreathSpeed", 17), "", blue) { save("headBreathSpeed", it); updatePet() }
-        addSlider(root, "头部轻晃幅度", 1, 8, prefs.getInt("headAmp", 4), "°", pink) { save("headAmp", it); updatePet() }
+        addSlider(root, "身体呼吸幅度（轻柔）", 1, 4, prefs.getInt("breathAmp", 2).coerceIn(1, 4), "", mint) { save("breathAmp", it); updatePet() }
+        addSlider(root, "身体呼吸速度", 8, 16, prefs.getInt("breathSpeed", 12).coerceIn(8, 16), "", mint) { save("breathSpeed", it); updatePet() }
+        addSlider(root, "头部上下呼吸幅度", 1, 4, prefs.getInt("headBreathAmp", 2).coerceIn(1, 4), "", blue) { save("headBreathAmp", it); updatePet() }
+        addSlider(root, "头部呼吸速度", 8, 20, prefs.getInt("headBreathSpeed", 14).coerceIn(8, 20), "", pink) { save("headBreathSpeed", it); updatePet() }
 
         section(root, "♡  互动与声音", pink)
         addSwitch(root, "音乐联动", "自动跟随播放状态；未开启音频分析时使用柔和估算节奏", prefs.getBoolean("musicEnabled", true), blue) { save("musicEnabled", it); updatePet(); if (it) openMediaSettings() }
@@ -99,7 +99,7 @@ class MainActivity : Activity() {
         root.addView(LinearLayout(this).apply { background = rounded(Color.WHITE, color, 2, 4) }, LinearLayout.LayoutParams(dp(66), dp(4)).apply { bottomMargin = dp(8); marginStart = dp(5) })
     }
     private fun addSwitch(root: LinearLayout, title: String, subtitle: String, checked: Boolean, accent: Int, changed: (Boolean) -> Unit) {
-        val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(14), dp(9), dp(12), dp(9)); background = rounded(Color.rgb(255,255,251), accent, 1, 18) }
+        val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(14), dp(9), dp(12), dp(9)); background = rounded(Color.WHITE, accent, 1, 18) }
         val line = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
         line.addView(TextView(this).apply { text = title; textSize = 15f; setTextColor(ink); typeface = Typeface.create("sans-serif-rounded", Typeface.BOLD) }, LinearLayout.LayoutParams(0, -2, 1f))
         line.addView(Switch(this).apply { isChecked = checked; setOnCheckedChangeListener { _, v -> changed(v) } })
@@ -108,7 +108,7 @@ class MainActivity : Activity() {
         root.addView(box, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(7) })
     }
     private fun addSlider(root: LinearLayout, title: String, min: Int, max: Int, initial: Int, suffix: String, accent: Int, changed: (Int) -> Unit) {
-        val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(14), dp(8), dp(14), dp(6)); background = rounded(Color.rgb(255,255,251), accent, 1, 17) }
+        val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(14), dp(8), dp(14), dp(6)); background = rounded(Color.WHITE, accent, 1, 17) }
         val label = TextView(this).apply { textSize = 13.5f; setTextColor(ink) }
         val seek = SeekBar(this).apply { this.max = max - min; progress = (initial - min).coerceIn(0, max - min) }
         fun update(v: Int) { label.text = "$title   $v$suffix" }
