@@ -331,9 +331,9 @@ class PetOverlayService : Service() {
                 if (container == null) return
                 if (!moved && !longPressing && !mediaPlaying) {
                     when (Random.nextInt(4)) {
-                        0 -> head?.animate()?.rotationBy(if (Random.nextBoolean()) 5f else -5f)?.setDuration(260)?.withEndAction { head?.animate()?.rotation(0f)?.setDuration(300)?.start() }?.start()
-                        1 -> body?.animate()?.translationY(-dp(5).toFloat())?.setDuration(220)?.withEndAction { body?.animate()?.translationY(0f)?.setDuration(300)?.start() }?.start()
-                        2 -> head?.animate()?.translationY(-dp(3).toFloat())?.setDuration(300)?.withEndAction { head?.animate()?.translationY(0f)?.setDuration(360)?.start() }?.start()
+                        0 -> head?.animate()?.translationY(-dp(2).toFloat())?.setDuration(420)?.withEndAction { head?.animate()?.translationY(0f)?.setDuration(480)?.start() }?.start()
+                        1 -> body?.animate()?.translationY(-dp(1).toFloat())?.setDuration(500)?.withEndAction { body?.animate()?.translationY(0f)?.setDuration(550)?.start() }?.start()
+                        2 -> head?.animate()?.translationY(-dp(2).toFloat())?.setDuration(460)?.withEndAction { head?.animate()?.translationY(0f)?.setDuration(520)?.start() }?.start()
                         else -> spawnEffect(listOf("✦", "·", "♡").random(), .42f)
                     }
                 }
