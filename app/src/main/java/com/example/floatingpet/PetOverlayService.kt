@@ -45,6 +45,7 @@ class PetOverlayService : Service() {
     private var startY = 0
     private var moved = false
     private var longPressing = false
+    private var interactionAnimating = false
     private var moveMode = false
     private var typing = false
     private var pressRunnable: Runnable? = null
@@ -161,7 +162,7 @@ class PetOverlayService : Service() {
             when (e.action) {
                 MotionEvent.ACTION_DOWN -> {
                     touchDownX = e.rawX; touchDownY = e.rawY; startX = params.x; startY = params.y
-                    moved = false; longPressing = false
+                    moved = false; longPressing = false; interactionAnimating = true
                     head?.pivotX = (head?.width ?: size / 2) / 2f
                     head?.pivotY = (head?.height ?: size / 2) * .82f
                     pressStartedAt = System.currentTimeMillis()
@@ -195,13 +196,16 @@ class PetOverlayService : Service() {
                     val wasLongPress = longPressing
                     if (moveMode) {
                         prefs.edit().putInt("petX", params.x).putInt("petY", params.y).apply()
+                        interactionAnimating = false
                     } else if (wasLongPress) {
                         releasePat()
                     } else if (!moved) {
                         speak("tap"); pressHead(); spawnEffect(listOf("♡", "✦", "✧", "♥").random(), .72f)
+                    } else {
+                        interactionAnimating = false
                     }
                     longPressing = false
-                    head?.animate()?.rotation(0f)?.translationX(0f)?.translationY(0f)?.setDuration(280)?.start()
+                    head?.animate()?.rotation(0f)?.translationX(0f)?.setDuration(180)?.start()
                     true
                 }
                 else -> true
@@ -240,9 +244,11 @@ class PetOverlayService : Service() {
             duration = bodyMs; repeatCount = ValueAnimator.INFINITE; repeatMode = ValueAnimator.REVERSE; interpolator = AccelerateDecelerateInterpolator()
             addUpdateListener { a ->
                 val t = a.animatedValue as Float
-                body?.translationY = -dp((breath.coerceAtMost(3f) * .18f * t).toInt()).toFloat()
-                body?.scaleY = 1f + .003f * t
-                body?.scaleX = 1f + .002f * t
+                if (!interactionAnimating && !longPressing && !moved) {
+                    body?.translationY = -(breath.coerceAtMost(3f) * .18f * resources.displayMetrics.density * t)
+                    body?.scaleY = 1f + .003f * t
+                    body?.scaleX = 1f + .002f * t
+                }
             }
             start()
         }
@@ -252,8 +258,8 @@ class PetOverlayService : Service() {
             duration = headMs; repeatCount = ValueAnimator.INFINITE; repeatMode = ValueAnimator.REVERSE; interpolator = AccelerateDecelerateInterpolator()
             addUpdateListener { a ->
                 val t = a.animatedValue as Float
-                if (!longPressing && !moved) {
-                    head?.translationY = -dp((headBreath * .65f * t).toInt()).toFloat()
+                if (!interactionAnimating && !longPressing && !moved) {
+                    head?.translationY = -(headBreath * .65f * resources.displayMetrics.density * t)
                     head?.scaleY = 1f + .003f * t
                 }
             }
@@ -271,11 +277,11 @@ class PetOverlayService : Service() {
                     val charge = (elapsed / 1100f).coerceIn(0f, 1f)
                     val wobble = kotlin.math.sin(elapsed / 190.0).toFloat() * (0.35f + charge * 0.65f)
                     // Keep the head anchored to the body: tiny downward compression only.
-                    head?.translationY = dp((charge * 3f).toInt()).toFloat()
+                    head?.translationY = charge * 3f * resources.displayMetrics.density
                     head?.rotation = wobble.coerceIn(-1.0f, 1.0f)
                     head?.scaleY = 1f - charge * .018f
                     head?.scaleX = 1f + charge * .008f
-                    handler.postDelayed(this, 40)
+                    handler.postDelayed(this, 16)
                 }
             }
         }
@@ -283,7 +289,9 @@ class PetOverlayService : Service() {
     }
 
     private fun pressHead() {
+        interactionAnimating = true
         idleAnimator?.cancel()
+        bodyBreathAnimator?.cancel(); headBreathAnimator?.cancel()
         head?.animate()?.cancel()
         body?.animate()?.cancel()
         head?.animate()?.translationY(dp(4).toFloat())?.rotation(0f)?.scaleY(.97f)?.setDuration(110)?.withEndAction {
@@ -293,7 +301,7 @@ class PetOverlayService : Service() {
             body?.animate()?.translationY(-dp(2).toFloat())?.setDuration(120)?.withEndAction {
                 body?.animate()?.translationY(0f)?.setDuration(220)?.start()
             }?.start()
-            handler.postDelayed({ startIdleAnimations() }, 420)
+            handler.postDelayed({ interactionAnimating = false; startIdleAnimations() }, 420)
         }?.start()
     }
 
@@ -330,7 +338,7 @@ class PetOverlayService : Service() {
         idleRandomRunnable = object : Runnable {
             override fun run() {
                 if (container == null) return
-                if (!moved && !longPressing && !mediaPlaying) {
+                if (!moved && !longPressing && !interactionAnimating && !mediaPlaying) {
                     when (Random.nextInt(4)) {
                         0 -> head?.animate()?.translationY(-dp(2).toFloat())?.setDuration(420)?.withEndAction { head?.animate()?.translationY(0f)?.setDuration(480)?.start() }?.start()
                         1 -> body?.animate()?.translationY(-dp(1).toFloat())?.setDuration(500)?.withEndAction { body?.animate()?.translationY(0f)?.setDuration(550)?.start() }?.start()
@@ -378,7 +386,9 @@ class PetOverlayService : Service() {
     }
 
     private fun releasePat() {
+        interactionAnimating = true
         handler.removeCallbacks(pressLoop ?: Runnable {})
+        bodyBreathAnimator?.cancel(); headBreathAnimator?.cancel()
         val charge = ((System.currentTimeMillis() - pressStartedAt) / 1100f).coerceIn(0f, 1f)
         head?.animate()?.cancel()
         head?.animate()?.translationY(-dp((2 + charge * 4).toInt()).toFloat())?.rotation(0f)?.scaleY(1.025f)?.scaleX(.99f)?.setDuration(180)?.withEndAction {
@@ -388,6 +398,7 @@ class PetOverlayService : Service() {
             body?.animate()?.translationY(0f)?.setDuration(320)?.start()
         }?.start()
         spawnEffect(if (charge > .55f) "♥" else "✦", .64f)
+        handler.postDelayed({ interactionAnimating = false; startIdleAnimations() }, 540)
     }
 
     private fun speak(kind: String) {
