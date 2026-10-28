@@ -183,8 +183,8 @@ class PetOverlayService : Service() {
                             try { wm.updateViewLayout(frame, params) } catch (_: Exception) {}
                         } else {
                             head?.rotation = (dx / 18f).coerceIn(-7f, 7f)
-                            head?.translationX = (dx * .035f).coerceIn(-dp(5).toFloat(), dp(5).toFloat())
-                            head?.translationY = (dy * .025f).coerceIn(-dp(4).toFloat(), dp(4).toFloat())
+                            head?.translationX = (dx * .02f).coerceIn(-dp(3).toFloat(), dp(3).toFloat())
+                            head?.translationY = (dy * .015f).coerceIn(-dp(2).toFloat(), dp(2).toFloat())
                         }
                     }
                     true
@@ -298,13 +298,13 @@ class PetOverlayService : Service() {
         head?.animate()?.cancel()
         body?.animate()?.cancel()
         // Move head and body together through the final bounce to avoid a visible gap.
-        head?.animate()?.translationY(dp(2).toFloat())?.rotation(0f)?.scaleY(.985f)?.setDuration(100)?.withEndAction {
-            head?.animate()?.translationY(0f)?.scaleY(1f)?.setDuration(190)?.start()
+        head?.animate()?.translationY(dp(3).toFloat())?.rotation(0f)?.scaleY(.98f)?.setDuration(110)?.withEndAction {
+            head?.animate()?.translationY(0f)?.scaleY(1f)?.setDuration(220)?.start()
         }?.start()
-        body?.animate()?.translationY(dp(1).toFloat())?.setDuration(100)?.withEndAction {
-            body?.animate()?.translationY(0f)?.setDuration(190)?.start()
+        body?.animate()?.translationY(dp(2).toFloat())?.setDuration(110)?.withEndAction {
+            body?.animate()?.translationY(0f)?.setDuration(220)?.start()
         }?.start()
-        handler.postDelayed({ interactionAnimating = false; startIdleAnimations() }, 300)
+        handler.postDelayed({ interactionAnimating = false; startIdleAnimations() }, 330)
     }
 
     private fun beatPulse(realBeat: Boolean = false) {
@@ -395,15 +395,15 @@ class PetOverlayService : Service() {
         head?.animate()?.cancel()
         body?.animate()?.cancel()
         // A restrained rebound: head and body travel in the same direction together.
-        val rebound = (1.5f + charge * 1.2f) * resources.displayMetrics.density
-        head?.animate()?.translationY(-rebound)?.rotation(0f)?.scaleY(1.015f)?.scaleX(.994f)?.setDuration(135)?.withEndAction {
-            head?.animate()?.translationY(0f)?.scaleX(1f)?.scaleY(1f)?.setDuration(230)?.start()
+        val rebound = (2.2f + charge * 1.5f).coerceAtMost(3.7f) * resources.displayMetrics.density
+        head?.animate()?.translationY(-rebound)?.rotation(0f)?.scaleY(1.02f)?.scaleX(.99f)?.setDuration(145)?.withEndAction {
+            head?.animate()?.translationY(0f)?.scaleX(1f)?.scaleY(1f)?.setDuration(250)?.start()
         }?.start()
-        body?.animate()?.translationY(-rebound * .72f)?.setDuration(135)?.withEndAction {
-            body?.animate()?.translationY(0f)?.setDuration(230)?.start()
+        body?.animate()?.translationY(-rebound * .9f)?.setDuration(145)?.withEndAction {
+            body?.animate()?.translationY(0f)?.setDuration(250)?.start()
         }?.start()
         spawnEffect(if (charge > .55f) "♥" else "✦", .64f)
-        handler.postDelayed({ interactionAnimating = false; startIdleAnimations() }, 370)
+        handler.postDelayed({ interactionAnimating = false; startIdleAnimations() }, 395)
     }
 
     private fun speak(kind: String) {
