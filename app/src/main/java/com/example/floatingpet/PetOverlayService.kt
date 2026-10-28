@@ -150,7 +150,7 @@ class PetOverlayService : Service() {
             textSize = 12f; setTextColor(Color.WHITE); gravity = Gravity.CENTER
             setPadding(dp(12), dp(8), dp(12), dp(8))
             setTextColor(Color.rgb(92, 83, 66))
-            background = GradientDrawable().apply { setColor(Color.rgb(255, 251, 232)); cornerRadius = dp(20).toFloat(); setStroke(dp(2), Color.rgb(171, 222, 217)) }
+            background = GradientDrawable().apply { setColor(Color.WHITE); cornerRadius = dp(20).toFloat(); setStroke(dp(2), Color.rgb(255, 190, 202)) }
             visibility = android.view.View.GONE
             maxLines = 2
         }
@@ -240,9 +240,9 @@ class PetOverlayService : Service() {
             duration = bodyMs; repeatCount = ValueAnimator.INFINITE; repeatMode = ValueAnimator.REVERSE; interpolator = AccelerateDecelerateInterpolator()
             addUpdateListener { a ->
                 val t = a.animatedValue as Float
-                body?.translationY = -dp((breath * 1.15f * t).toInt()).toFloat()
-                body?.scaleY = 1f + .055f * t
-                body?.scaleX = 1f + .018f * t
+                body?.translationY = -dp((breath.coerceAtMost(3f) * .18f * t).toInt()).toFloat()
+                body?.scaleY = 1f + .003f * t
+                body?.scaleX = 1f + .002f * t
             }
             start()
         }
@@ -252,20 +252,14 @@ class PetOverlayService : Service() {
             addUpdateListener { a ->
                 val t = a.animatedValue as Float
                 if (!longPressing && !moved) {
-                    head?.translationY = -dp((breath * .7f * t).toInt()).toFloat()
-                    head?.scaleY = 1f + .012f * t
+                    head?.translationY = -dp((breath.coerceAtMost(3f) * .75f * t).toInt()).toFloat()
+                    head?.scaleY = 1f + .004f * t
                 }
             }
             start()
         }
-        val amp = prefs.getInt("headAmp", 4).toFloat().coerceAtMost(4.5f)
-        val speed = prefs.getInt("headSpeed", 15)
-        val duration = (3300 - speed * 85).toLong().coerceAtLeast(500)
-        idleAnimator = ValueAnimator.ofFloat(-1f, 1f).apply {
-            this.duration = duration; repeatCount = ValueAnimator.INFINITE; repeatMode = ValueAnimator.REVERSE; interpolator = AccelerateDecelerateInterpolator()
-            addUpdateListener { if (!longPressing && !moved) head?.rotation = (it.animatedValue as Float) * amp }
-            start()
-        }
+        // Natural idle motion is vertical breathing only; no side-to-side head wobble.
+        idleAnimator = null
     }
 
     private fun beginPressLoop() {
@@ -274,12 +268,13 @@ class PetOverlayService : Service() {
                 if (longPressing && !moveMode) {
                     val elapsed = (System.currentTimeMillis() - pressStartedAt).coerceAtLeast(0L)
                     val charge = (elapsed / 1100f).coerceIn(0f, 1f)
-                    val wobble = kotlin.math.sin(elapsed / 62.0).toFloat() * (1.0f + charge * 2.4f)
-                    head?.translationY = dp(2 + (charge * 13f).toInt()).toFloat()
-                    head?.rotation = wobble.coerceIn(-4.5f, 4.5f)
-                    head?.scaleY = 1f - charge * .075f
-                    head?.scaleX = 1f + charge * .025f
-                    handler.postDelayed(this, 32)
+                    val wobble = kotlin.math.sin(elapsed / 190.0).toFloat() * (0.35f + charge * 0.65f)
+                    // Keep the head anchored to the body: tiny downward compression only.
+                    head?.translationY = dp((charge * 3f).toInt()).toFloat()
+                    head?.rotation = wobble.coerceIn(-1.0f, 1.0f)
+                    head?.scaleY = 1f - charge * .018f
+                    head?.scaleX = 1f + charge * .008f
+                    handler.postDelayed(this, 40)
                 }
             }
         }
@@ -290,12 +285,12 @@ class PetOverlayService : Service() {
         idleAnimator?.cancel()
         head?.animate()?.cancel()
         body?.animate()?.cancel()
-        head?.animate()?.translationY(dp(22).toFloat())?.rotation(0f)?.scaleY(.90f)?.setDuration(100)?.withEndAction {
-            head?.animate()?.translationY(0f)?.scaleY(1.04f)?.setDuration(160)?.withEndAction {
+        head?.animate()?.translationY(dp(4).toFloat())?.rotation(0f)?.scaleY(.97f)?.setDuration(110)?.withEndAction {
+            head?.animate()?.translationY(-dp(2).toFloat())?.scaleY(1.015f)?.setDuration(150)?.withEndAction {
                 head?.animate()?.scaleY(1f)?.setDuration(130)?.start()
             }?.start()
-            body?.animate()?.translationY(-dp(7).toFloat())?.setDuration(110)?.withEndAction {
-                body?.animate()?.translationY(0f)?.setDuration(200)?.start()
+            body?.animate()?.translationY(-dp(2).toFloat())?.setDuration(120)?.withEndAction {
+                body?.animate()?.translationY(0f)?.setDuration(220)?.start()
             }?.start()
             handler.postDelayed({ startIdleAnimations() }, 420)
         }?.start()
@@ -303,14 +298,14 @@ class PetOverlayService : Service() {
 
     private fun beatPulse(realBeat: Boolean = false) {
         head?.animate()?.cancel()
-        val drop = if (realBeat) dp(7).toFloat() else dp(4).toFloat()
+        val drop = if (realBeat) dp(3).toFloat() else dp(2).toFloat()
         head?.animate()?.translationY(drop)?.rotation(2.2f)?.setDuration(85)?.withEndAction {
             head?.animate()?.translationY(-dp(2).toFloat())?.rotation(-1.4f)?.setDuration(95)?.withEndAction {
                 head?.animate()?.translationY(0f)?.rotation(0f)?.setDuration(110)?.start()
             }?.start()
         }?.start()
-        body?.animate()?.scaleX(1.018f)?.scaleY(1.025f)?.setDuration(95)?.withEndAction {
-            body?.animate()?.scaleX(1f)?.scaleY(1f)?.setDuration(160)?.start()
+        body?.animate()?.scaleX(1.003f)?.scaleY(1.004f)?.setDuration(120)?.withEndAction {
+            body?.animate()?.scaleX(1f)?.scaleY(1f)?.setDuration(180)?.start()
         }?.start()
         val now = System.currentTimeMillis()
         if (now - lastBeatTalk > 6500L) { lastBeatTalk = now; speak("beat") }
@@ -373,11 +368,11 @@ class PetOverlayService : Service() {
 
     private fun typingPulse() {
         head?.animate()?.cancel()
-        head?.animate()?.translationY(dp(5).toFloat())?.rotation(1.2f)?.setDuration(48)?.withEndAction {
-            head?.animate()?.translationY(0f)?.rotation(0f)?.setDuration(95)?.start()
+        head?.animate()?.translationY(dp(2).toFloat())?.rotation(.4f)?.setDuration(70)?.withEndAction {
+            head?.animate()?.translationY(0f)?.rotation(0f)?.setDuration(130)?.start()
         }?.start()
-        body?.animate()?.translationY(-dp(2).toFloat())?.setDuration(55)?.withEndAction {
-            body?.animate()?.translationY(0f)?.setDuration(100)?.start()
+        body?.animate()?.translationY(-dp(1).toFloat())?.setDuration(90)?.withEndAction {
+            body?.animate()?.translationY(0f)?.setDuration(150)?.start()
         }?.start()
     }
 
@@ -385,11 +380,11 @@ class PetOverlayService : Service() {
         handler.removeCallbacks(pressLoop ?: Runnable {})
         val charge = ((System.currentTimeMillis() - pressStartedAt) / 1100f).coerceIn(0f, 1f)
         head?.animate()?.cancel()
-        head?.animate()?.translationY(-dp((5 + charge * 10).toInt()).toFloat())?.rotation(0f)?.scaleY(1.08f)?.scaleX(.97f)?.setDuration(100)?.withEndAction {
-            head?.animate()?.translationY(0f)?.scaleX(1f)?.scaleY(1f)?.setDuration(220)?.start()
+        head?.animate()?.translationY(-dp((2 + charge * 4).toInt()).toFloat())?.rotation(0f)?.scaleY(1.025f)?.scaleX(.99f)?.setDuration(180)?.withEndAction {
+            head?.animate()?.translationY(0f)?.scaleX(1f)?.scaleY(1f)?.setDuration(320)?.start()
         }?.start()
-        body?.animate()?.translationY(-dp((3 + charge * 4).toInt()).toFloat())?.setDuration(100)?.withEndAction {
-            body?.animate()?.translationY(0f)?.setDuration(220)?.start()
+        body?.animate()?.translationY(-dp(1).toFloat())?.setDuration(180)?.withEndAction {
+            body?.animate()?.translationY(0f)?.setDuration(320)?.start()
         }?.start()
         spawnEffect(if (charge > .55f) "♥" else "✦", .64f)
     }
