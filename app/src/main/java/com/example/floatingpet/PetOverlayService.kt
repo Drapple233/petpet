@@ -351,11 +351,14 @@ class PetOverlayService : Service() {
     private fun spawnEffect(symbol: String, horizontalPosition: Float) {
         val frame = container ?: return
         val size = dp(if (symbol.length > 1) 25 else 29)
-        val effect = TextView(this).apply {
-            text = symbol
-            textSize = if (symbol == "·") 20f else 23f
-            gravity = Gravity.CENTER
-            setTextColor(when (symbol) { "♡", "♥" -> Color.rgb(239, 143, 166); "♪", "♫" -> Color.rgb(101, 178, 222); else -> Color.rgb(240, 190, 104) })
+        val effect = ImageView(this).apply {
+            setImageResource(when (symbol) {
+                "♡", "♥" -> R.drawable.pet_effect_heart
+                "♪", "♫" -> R.drawable.pet_effect_note
+                "✿", "·" -> R.drawable.pet_effect_flower
+                else -> R.drawable.pet_effect_star
+            })
+            scaleType = ImageView.ScaleType.FIT_CENTER
             alpha = 0f
         }
         val safeWidth = frame.width.coerceAtLeast(dp(120))
