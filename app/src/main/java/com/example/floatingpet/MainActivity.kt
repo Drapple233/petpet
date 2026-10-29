@@ -161,9 +161,9 @@ class MainActivity : Activity() {
             title == "摸头：头部下压幅度" -> 12
             else -> 8
         }
-        val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(14), dp(8), dp(14), dp(6)); background = rounded(Color.WHITE, accent, 1, 17) }
+        val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(16), dp(12), dp(16), dp(10)); background = rounded(Color.WHITE, accent, 1, 22); elevation = dp(2).toFloat() }
         val label = TextView(this).apply { textSize = 13.5f; setTextColor(ink) }
-        val seek = SeekBar(this).apply { max = maxHalfDp - minHalfDp; progress = (initialHalfDp - minHalfDp).coerceIn(0, maxHalfDp - minHalfDp) }
+        val seek = SeekBar(this).apply { max = maxHalfDp - minHalfDp; progress = (initialHalfDp - minHalfDp).coerceIn(0, maxHalfDp - minHalfDp); progressTintList = ColorStateList.valueOf(Color.rgb(75, 79, 84)); thumbTintList = ColorStateList.valueOf(Color.rgb(55, 59, 64)); progressBackgroundTintList = ColorStateList.valueOf(Color.rgb(211, 214, 218)) }
         fun update(v: Int) { label.text = "$title   ${"%.1f".format(v / 2f)} dp" }
         update(minHalfDp + seek.progress)
         seek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
@@ -178,7 +178,7 @@ class MainActivity : Activity() {
     private fun addSlider(root: LinearLayout, title: String, min: Int, max: Int, initial: Int, suffix: String, accent: Int, changed: (Int) -> Unit) {
         val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(14), dp(8), dp(14), dp(6)); background = rounded(Color.WHITE, accent, 1, 17) }
         val label = TextView(this).apply { textSize = 13.5f; setTextColor(ink) }
-        val seek = SeekBar(this).apply { this.max = max - min; progress = (initial - min).coerceIn(0, max - min) }
+        val seek = SeekBar(this).apply { this.max = max - min; progress = (initial - min).coerceIn(0, max - min); progressTintList = ColorStateList.valueOf(Color.rgb(75, 79, 84)); thumbTintList = ColorStateList.valueOf(Color.rgb(55, 59, 64)); progressBackgroundTintList = ColorStateList.valueOf(Color.rgb(211, 214, 218)) }
         fun update(v: Int) { label.text = "$title   $v$suffix" }
         update(min + seek.progress)
         seek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
