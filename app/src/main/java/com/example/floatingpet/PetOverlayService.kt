@@ -233,7 +233,6 @@ class PetOverlayService : Service() {
         try { wm.updateViewLayout(frame, params) } catch (_: Exception) {}
         bodyBreathAnimator?.cancel(); headBreathAnimator?.cancel(); idleAnimator?.cancel()
         startIdleAnimations()
-        scheduleRandomIdleAction()
     }
 
     private fun startIdleAnimations() {
