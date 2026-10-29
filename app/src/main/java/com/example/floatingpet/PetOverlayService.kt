@@ -238,8 +238,8 @@ class PetOverlayService : Service() {
     }
 
     private fun startIdleAnimations() {
-        val breath = 3f
-        val bodyMs = (3300 - 14 * 45).toLong().coerceIn(2400L, 3000L)
+        val breath = prefs.getInt("breathAmp", 3).toFloat().coerceIn(1f, 4f)
+        val bodyMs = (3300 - prefs.getInt("breathSpeed", 14) * 45).toLong().coerceIn(2400L, 3000L)
         bodyBreathAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
             duration = bodyMs; repeatCount = ValueAnimator.INFINITE; repeatMode = ValueAnimator.REVERSE; interpolator = AccelerateDecelerateInterpolator()
             addUpdateListener { a ->
@@ -252,8 +252,8 @@ class PetOverlayService : Service() {
             }
             start()
         }
-        val headBreath = 2f
-        val headMs = (2600 - 20 * 45).toLong().coerceIn(1500L, 2300L)
+        val headBreath = prefs.getInt("headBreathAmp", 2).toFloat().coerceIn(1f, 4f)
+        val headMs = (2600 - prefs.getInt("headBreathSpeed", 20) * 45).toLong().coerceIn(1500L, 2300L)
         headBreathAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
             duration = headMs; repeatCount = ValueAnimator.INFINITE; repeatMode = ValueAnimator.REVERSE; interpolator = AccelerateDecelerateInterpolator()
             addUpdateListener { a ->
@@ -279,11 +279,11 @@ class PetOverlayService : Service() {
                     // so the head stays visually connected to the body.
                     val tremble = kotlin.math.sin(elapsed / 18.0).toFloat()
                     val density = resources.displayMetrics.density
-                    head?.translationY = (0.12f + charge * 0.25f + tremble * (0.12f + charge * 0.22f)) * density
+                    head?.translationY = (0.5f + charge * 1.4f + tremble * (0.08f + charge * 0.12f)) * density
                     head?.rotation = tremble * (0.35f + charge * 0.8f)
                     head?.scaleY = 1f - charge * .004f
                     head?.scaleX = 1f + charge * .002f
-                    body?.translationY = (tremble * 0.08f * charge) * density
+                    body?.translationY = (0.4f + charge * 1.2f + tremble * (0.06f + charge * 0.1f)) * density
                     handler.postDelayed(this, 16)
                 }
             }
@@ -298,8 +298,8 @@ class PetOverlayService : Service() {
         head?.animate()?.cancel()
         body?.animate()?.cancel()
         // Move head and body together through the final bounce to avoid a visible gap.
-        val headJump = dp(prefs.getInt("clickHeadJump", 6))
-        val bodyJump = dp(prefs.getInt("clickBodyJump", 5))
+        val headJump = -dp(prefs.getInt("clickHeadJump", 6))
+        val bodyJump = -dp(prefs.getInt("clickBodyJump", 5))
         head?.animate()?.translationY(headJump.toFloat())?.rotation(0f)?.scaleY(.975f)?.setDuration(110)?.withEndAction {
             head?.animate()?.translationY(0f)?.scaleY(1f)?.setDuration(230)?.start()
         }?.start()
