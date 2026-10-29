@@ -182,7 +182,7 @@ class PetOverlayService : Service() {
         // The base layer is the complete figure; the only separate art layer is the foreground head.
         // Dialogue occupies a compact strip above the pet.
         frame.addView(body, FrameLayout.LayoutParams((size * 1.18f).toInt(), (size * 1.52f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(42) })
-        frame.addView(head, FrameLayout.LayoutParams((size * .594f).toInt(), (size * .594f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(42) + (size * .30f).toInt() })
+        frame.addView(head, FrameLayout.LayoutParams((size * .5643f).toInt(), (size * .5643f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(42) + (size * .30f).toInt() })
         frame.addView(speech, FrameLayout.LayoutParams((size * 1.26f).toInt().coerceAtMost((size * 1.28f).toInt()), -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(2) })
         frame.setOnTouchListener { _, e ->
             when (e.action) {
@@ -276,7 +276,7 @@ class PetOverlayService : Service() {
         if (prefs.contains("petX")) params.x = prefs.getInt("petX", params.x)
         if (prefs.contains("petY")) params.y = prefs.getInt("petY", params.y)
         body?.layoutParams = FrameLayout.LayoutParams((size * 1.18f).toInt(), (size * 1.52f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(42) }
-        head?.layoutParams = FrameLayout.LayoutParams((size * .594f).toInt(), (size * .594f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(42) + (size * .30f).toInt() }
+        head?.layoutParams = FrameLayout.LayoutParams((size * .5643f).toInt(), (size * .5643f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(42) + (size * .30f).toInt() }
         speech?.layoutParams = FrameLayout.LayoutParams((size * 1.26f).toInt(), -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(2) }
         body?.requestLayout(); head?.requestLayout()
         try { wm.updateViewLayout(frame, params) } catch (_: Exception) {}
