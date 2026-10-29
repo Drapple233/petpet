@@ -154,7 +154,10 @@ class PetOverlayService : Service() {
         params = WindowManager.LayoutParams((size * 1.30f).toInt(), (size * 1.62f).toInt(), type, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN, PixelFormat.TRANSLUCENT).apply { gravity = Gravity.TOP or Gravity.START; x = 40; y = 100 }
         val frame = FrameLayout(this).apply { clipChildren = false; clipToPadding = false }
         body = ImageView(this).apply {
-            setImageDrawable(android.graphics.drawable.Drawable.createFromStream(assets.open("mascot_body.png"), null))
+            // Fox branch: unified full-body art includes the head and long hair.
+            // Fall back to the original torso asset until custom artwork is added.
+            val fullFigure = try { assets.open("mascot_fullbody.png") } catch (_: Exception) { assets.open("mascot_body.png") }
+            setImageDrawable(android.graphics.drawable.Drawable.createFromStream(fullFigure, null))
             scaleType = ImageView.ScaleType.FIT_CENTER
         }
         head = ImageView(this).apply {
@@ -176,7 +179,9 @@ class PetOverlayService : Service() {
             maxLines = 2
         }
         // Reserve a compact strip above the pet for dialogue so the bubble never covers the face.
-        frame.addView(body, FrameLayout.LayoutParams(size, size, Gravity.CENTER_HORIZONTAL or Gravity.TOP).apply { topMargin = (size * .52f).toInt() })
+        // Unified full-figure background prevents the head/body seam from opening.
+        // The separate head is only a foreground overlay for subtle interaction motion.
+        frame.addView(body, FrameLayout.LayoutParams((size * 1.18f).toInt(), (size * 1.52f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(2) })
         frame.addView(head, FrameLayout.LayoutParams((size * .82f).toInt(), (size * .7f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = (size * .25f).toInt() })
         frame.addView(speech, FrameLayout.LayoutParams((size * 1.22f).toInt().coerceAtMost((size * 1.28f).toInt()), -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = -dp(6) })
         frame.setOnTouchListener { _, e ->
@@ -270,7 +275,7 @@ class PetOverlayService : Service() {
         }
         if (prefs.contains("petX")) params.x = prefs.getInt("petX", params.x)
         if (prefs.contains("petY")) params.y = prefs.getInt("petY", params.y)
-        body?.layoutParams = FrameLayout.LayoutParams(size, size, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = (size * .52f).toInt() }
+        body?.layoutParams = FrameLayout.LayoutParams((size * 1.18f).toInt(), (size * 1.52f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(2) }
         head?.layoutParams = FrameLayout.LayoutParams((size * .82f).toInt(), (size * .7f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = (size * .25f).toInt() }
         speech?.layoutParams = FrameLayout.LayoutParams((size * 1.22f).toInt(), -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = -dp(6) }
         body?.requestLayout(); head?.requestLayout()
