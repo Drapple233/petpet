@@ -71,6 +71,7 @@ class MainActivity : Activity() {
         }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(7) })
         addSlider(root, "点击：头部向上跳跃幅度", 2, 12, prefs.getInt("clickHeadJump", 6).coerceIn(2, 12), " dp", blue) { save("clickHeadJump", it); updatePet() }
         addSlider(root, "点击：身体向上跳跃幅度", 2, 12, prefs.getInt("clickBodyJump", 5).coerceIn(2, 12), " dp", mint) { save("clickBodyJump", it); updatePet() }
+        addHalfDpSlider(root, "长按蓄力：头部比身体额外下压", prefs.getInt("holdHeadDownExtraHalfDp", 3).coerceIn(0, 8), pink) { save("holdHeadDownExtraHalfDp", it); updatePet() }
         addSlider(root, "长按松手：头部向上弹跳幅度", 2, 14, prefs.getInt("holdHeadJump", 10).coerceIn(2, 14), " dp", pink) { save("holdHeadJump", it); updatePet() }
         addSlider(root, "长按松手：身体向上弹跳幅度", 2, 14, prefs.getInt("holdBodyJump", 9).coerceIn(2, 14), " dp", butter) { save("holdBodyJump", it); updatePet() }
 
@@ -115,6 +116,23 @@ class MainActivity : Activity() {
         line.addView(Switch(this).apply { isChecked = checked; setOnCheckedChangeListener { _, v -> changed(v) } })
         box.addView(line)
         box.addView(TextView(this).apply { text = subtitle; textSize = 11.5f; setTextColor(Color.rgb(135, 148, 148)); setPadding(0, dp(2), 0, 0) })
+        root.addView(box, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(7) })
+    }
+    private fun addHalfDpSlider(root: LinearLayout, title: String, initialHalfDp: Int, accent: Int, changed: (Int) -> Unit) {
+        val minHalfDp = 0
+        val maxHalfDp = 8
+        val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(14), dp(8), dp(14), dp(6)); background = rounded(Color.WHITE, accent, 1, 17) }
+        val label = TextView(this).apply { textSize = 13.5f; setTextColor(ink) }
+        val seek = SeekBar(this).apply { max = maxHalfDp - minHalfDp; progress = (initialHalfDp - minHalfDp).coerceIn(0, maxHalfDp - minHalfDp) }
+        fun update(v: Int) { label.text = "$title   ${"%.1f".format(v / 2f)} dp" }
+        update(minHalfDp + seek.progress)
+        seek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(s: SeekBar?, p: Int, fromUser: Boolean) { val v = minHalfDp + p; update(v); if (fromUser) changed(v) }
+            override fun onStartTrackingTouch(s: SeekBar?) {}
+            override fun onStopTrackingTouch(s: SeekBar?) {}
+        })
+        box.addView(label)
+        box.addView(seek)
         root.addView(box, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(7) })
     }
     private fun addSlider(root: LinearLayout, title: String, min: Int, max: Int, initial: Int, suffix: String, accent: Int, changed: (Int) -> Unit) {
