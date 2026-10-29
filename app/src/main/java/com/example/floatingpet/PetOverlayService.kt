@@ -214,7 +214,6 @@ class PetOverlayService : Service() {
         container = frame
         wm.addView(frame, params)
         startIdleAnimations()
-        scheduleRandomIdleAction()
     }
 
     private fun applySettings() {
@@ -279,11 +278,13 @@ class PetOverlayService : Service() {
                     // so the head stays visually connected to the body.
                     val tremble = kotlin.math.sin(elapsed / 18.0).toFloat()
                     val density = resources.displayMetrics.density
-                    head?.translationY = (0.5f + charge * 1.4f + tremble * (0.08f + charge * 0.12f)) * density
-                    head?.rotation = tremble * (0.35f + charge * 0.8f)
+                    val bodyDown = 0.4f + charge * 1.2f + tremble * (0.06f + charge * 0.1f)
+                    val extraHeadDown = prefs.getInt("holdHeadDownExtraHalfDp", 3).coerceIn(0, 8) / 2f
+                    head?.translationY = (bodyDown + extraHeadDown * charge + tremble * (0.02f + charge * 0.04f)) * density
+                    head?.rotation = tremble * (0.25f + charge * 0.45f)
                     head?.scaleY = 1f - charge * .004f
                     head?.scaleX = 1f + charge * .002f
-                    body?.translationY = (0.4f + charge * 1.2f + tremble * (0.06f + charge * 0.1f)) * density
+                    body?.translationY = bodyDown * density
                     handler.postDelayed(this, 16)
                 }
             }
@@ -335,25 +336,6 @@ class PetOverlayService : Service() {
             }
         }
         handler.post(mediaBeatRunnable!!)
-    }
-
-    private fun scheduleRandomIdleAction() {
-        handler.removeCallbacks(idleRandomRunnable ?: Runnable {})
-        idleRandomRunnable = object : Runnable {
-            override fun run() {
-                if (container == null) return
-                if (!moved && !longPressing && !interactionAnimating && !mediaPlaying) {
-                    when (Random.nextInt(4)) {
-                        0 -> head?.animate()?.translationY(-dp(2).toFloat())?.setDuration(420)?.withEndAction { head?.animate()?.translationY(0f)?.setDuration(480)?.start() }?.start()
-                        1 -> body?.animate()?.translationY(-dp(1).toFloat())?.setDuration(500)?.withEndAction { body?.animate()?.translationY(0f)?.setDuration(550)?.start() }?.start()
-                        2 -> head?.animate()?.translationY(-dp(2).toFloat())?.setDuration(460)?.withEndAction { head?.animate()?.translationY(0f)?.setDuration(520)?.start() }?.start()
-                        else -> spawnEffect(listOf("✦", "·", "♡").random(), .42f)
-                    }
-                }
-                handler.postDelayed(this, Random.nextLong(6500L, 12500L))
-            }
-        }
-        handler.postDelayed(idleRandomRunnable!!, Random.nextLong(4500L, 9000L))
     }
 
     private fun spawnEffect(symbol: String, horizontalPosition: Float) {
