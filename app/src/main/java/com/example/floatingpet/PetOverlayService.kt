@@ -38,8 +38,8 @@ class PetOverlayService : Service() {
     private val clickHeadJumpDp = 7.0f
     private val clickBodyJumpDp = 6.0f
     private val holdExtraHeadDownDp = 1.0f
-    private val holdHeadReboundDp = 10.0f
-    private val holdBodyReboundDp = 8.5f
+    private val holdHeadReboundDp = 9.5f
+    private val holdBodyReboundDp = 8.0f
     private val patHeadDownDp = 6.0f
     private lateinit var wm: WindowManager
     private var container: FrameLayout? = null
@@ -152,7 +152,7 @@ class PetOverlayService : Service() {
         val size = prefs.getInt("size", 220)
         val type = if (Build.VERSION.SDK_INT >= 26) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY else WindowManager.LayoutParams.TYPE_PHONE
         params = WindowManager.LayoutParams((size * 1.30f).toInt(), (size * 1.62f).toInt(), type, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN, PixelFormat.TRANSLUCENT).apply { gravity = Gravity.TOP or Gravity.START; x = 40; y = 100 }
-        val frame = FrameLayout(this)
+        val frame = FrameLayout(this).apply { clipChildren = false; clipToPadding = false }
         body = ImageView(this).apply {
             setImageDrawable(android.graphics.drawable.Drawable.createFromStream(assets.open("mascot_body.png"), null))
             scaleType = ImageView.ScaleType.FIT_CENTER
@@ -178,7 +178,7 @@ class PetOverlayService : Service() {
         // Reserve a compact strip above the pet for dialogue so the bubble never covers the face.
         frame.addView(body, FrameLayout.LayoutParams(size, size, Gravity.CENTER_HORIZONTAL or Gravity.TOP).apply { topMargin = (size * .52f).toInt() })
         frame.addView(head, FrameLayout.LayoutParams((size * .82f).toInt(), (size * .7f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = (size * .25f).toInt() })
-        frame.addView(speech, FrameLayout.LayoutParams((size * 1.22f).toInt().coerceAtMost((size * 1.28f).toInt()), -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(2) })
+        frame.addView(speech, FrameLayout.LayoutParams((size * 1.22f).toInt().coerceAtMost((size * 1.28f).toInt()), -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = -dp(6) })
         frame.setOnTouchListener { _, e ->
             when (e.action) {
                 MotionEvent.ACTION_DOWN -> {
@@ -272,7 +272,7 @@ class PetOverlayService : Service() {
         if (prefs.contains("petY")) params.y = prefs.getInt("petY", params.y)
         body?.layoutParams = FrameLayout.LayoutParams(size, size, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = (size * .52f).toInt() }
         head?.layoutParams = FrameLayout.LayoutParams((size * .82f).toInt(), (size * .7f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = (size * .25f).toInt() }
-        speech?.layoutParams = FrameLayout.LayoutParams((size * 1.22f).toInt(), -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(2) }
+        speech?.layoutParams = FrameLayout.LayoutParams((size * 1.22f).toInt(), -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = -dp(6) }
         body?.requestLayout(); head?.requestLayout()
         try { wm.updateViewLayout(frame, params) } catch (_: Exception) {}
         bodyBreathAnimator?.cancel(); headBreathAnimator?.cancel(); idleAnimator?.cancel()
@@ -356,9 +356,9 @@ class PetOverlayService : Service() {
 
     private fun beatPulse(realBeat: Boolean = false) {
         head?.animate()?.cancel()
-        val drop = if (realBeat) dp(2.5f).toFloat() else dp(1.5f).toFloat()
+        val drop = if (realBeat) dp(2.0f).toFloat() else dp(1.0f).toFloat()
         head?.animate()?.translationY(drop)?.rotation(2.2f)?.setDuration(85)?.withEndAction {
-            head?.animate()?.translationY(-dp(1.5f).toFloat())?.rotation(-1.4f)?.setDuration(95)?.withEndAction {
+            head?.animate()?.translationY(-dp(1.0f).toFloat())?.rotation(-1.4f)?.setDuration(95)?.withEndAction {
                 head?.animate()?.translationY(0f)?.rotation(0f)?.setDuration(110)?.start()
             }?.start()
         }?.start()
