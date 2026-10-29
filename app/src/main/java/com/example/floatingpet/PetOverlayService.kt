@@ -238,8 +238,8 @@ class PetOverlayService : Service() {
     }
 
     private fun startIdleAnimations() {
-        val breath = prefs.getInt("breathAmp", 7).toFloat()
-        val bodyMs = (3300 - prefs.getInt("breathSpeed", 12) * 45).toLong().coerceIn(2400L, 3000L)
+        val breath = prefs.getInt("breathAmp", 3).toFloat()
+        val bodyMs = (3300 - prefs.getInt("breathSpeed", 14) * 45).toLong().coerceIn(2400L, 3000L)
         bodyBreathAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
             duration = bodyMs; repeatCount = ValueAnimator.INFINITE; repeatMode = ValueAnimator.REVERSE; interpolator = AccelerateDecelerateInterpolator()
             addUpdateListener { a ->
@@ -253,7 +253,7 @@ class PetOverlayService : Service() {
             start()
         }
         val headBreath = prefs.getInt("headBreathAmp", 2).toFloat().coerceIn(1f, 4f)
-        val headMs = (2600 - prefs.getInt("headBreathSpeed", 14) * 45).toLong().coerceIn(1500L, 2300L)
+        val headMs = (2600 - prefs.getInt("headBreathSpeed", 20) * 45).toLong().coerceIn(1500L, 2300L)
         headBreathAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
             duration = headMs; repeatCount = ValueAnimator.INFINITE; repeatMode = ValueAnimator.REVERSE; interpolator = AccelerateDecelerateInterpolator()
             addUpdateListener { a ->
@@ -277,13 +277,13 @@ class PetOverlayService : Service() {
                     val charge = (elapsed / 1100f).coerceIn(0f, 1f)
                     // Fast, tight trembling builds as the hold continues; keep vertical travel tiny
                     // so the head stays visually connected to the body.
-                    val tremble = kotlin.math.sin(elapsed / 34.0).toFloat()
+                    val tremble = kotlin.math.sin(elapsed / 18.0).toFloat()
                     val density = resources.displayMetrics.density
-                    head?.translationY = (0.35f + charge * 0.55f + tremble * (0.25f + charge * 0.55f)) * density
-                    head?.rotation = tremble * (0.7f + charge * 1.5f)
-                    head?.scaleY = 1f - charge * .008f
-                    head?.scaleX = 1f + charge * .004f
-                    body?.translationY = (tremble * 0.18f * charge) * density
+                    head?.translationY = (0.12f + charge * 0.25f + tremble * (0.12f + charge * 0.22f)) * density
+                    head?.rotation = tremble * (0.35f + charge * 0.8f)
+                    head?.scaleY = 1f - charge * .004f
+                    head?.scaleX = 1f + charge * .002f
+                    body?.translationY = (tremble * 0.08f * charge) * density
                     handler.postDelayed(this, 16)
                 }
             }
@@ -298,11 +298,13 @@ class PetOverlayService : Service() {
         head?.animate()?.cancel()
         body?.animate()?.cancel()
         // Move head and body together through the final bounce to avoid a visible gap.
-        head?.animate()?.translationY(dp(3).toFloat())?.rotation(0f)?.scaleY(.98f)?.setDuration(110)?.withEndAction {
-            head?.animate()?.translationY(0f)?.scaleY(1f)?.setDuration(220)?.start()
+        val headJump = dp(prefs.getInt("clickHeadJump", 6))
+        val bodyJump = dp(prefs.getInt("clickBodyJump", 5))
+        head?.animate()?.translationY(headJump.toFloat())?.rotation(0f)?.scaleY(.975f)?.setDuration(110)?.withEndAction {
+            head?.animate()?.translationY(0f)?.scaleY(1f)?.setDuration(230)?.start()
         }?.start()
-        body?.animate()?.translationY(dp(2).toFloat())?.setDuration(110)?.withEndAction {
-            body?.animate()?.translationY(0f)?.setDuration(220)?.start()
+        body?.animate()?.translationY(bodyJump.toFloat())?.setDuration(110)?.withEndAction {
+            body?.animate()?.translationY(0f)?.setDuration(230)?.start()
         }?.start()
         handler.postDelayed({ interactionAnimating = false; startIdleAnimations() }, 330)
     }
@@ -395,11 +397,14 @@ class PetOverlayService : Service() {
         head?.animate()?.cancel()
         body?.animate()?.cancel()
         // A restrained rebound: head and body travel in the same direction together.
-        val rebound = (2.2f + charge * 1.5f).coerceAtMost(3.7f) * resources.displayMetrics.density
+        val headBase = prefs.getInt("holdHeadJump", 10).toFloat()
+        val bodyBase = prefs.getInt("holdBodyJump", 9).toFloat()
+        val rebound = (headBase + charge * 2.0f).coerceAtMost(18f) * resources.displayMetrics.density
+        val bodyRebound = (bodyBase + charge * 2.0f).coerceAtMost(18f) * resources.displayMetrics.density
         head?.animate()?.translationY(-rebound)?.rotation(0f)?.scaleY(1.02f)?.scaleX(.99f)?.setDuration(145)?.withEndAction {
             head?.animate()?.translationY(0f)?.scaleX(1f)?.scaleY(1f)?.setDuration(250)?.start()
         }?.start()
-        body?.animate()?.translationY(-rebound * .9f)?.setDuration(145)?.withEndAction {
+        body?.animate()?.translationY(-bodyRebound)?.setDuration(145)?.withEndAction {
             body?.animate()?.translationY(0f)?.setDuration(250)?.start()
         }?.start()
         spawnEffect(if (charge > .55f) "♥" else "✦", .64f)
