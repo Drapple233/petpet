@@ -164,8 +164,9 @@ class PetOverlayService : Service() {
                 MotionEvent.ACTION_DOWN -> {
                     touchDownX = e.rawX; touchDownY = e.rawY; startX = params.x; startY = params.y
                     moved = false; longPressing = false; chargeCancelledByMove = false; interactionAnimating = true
-                    head?.pivotX = (head?.width ?: size / 2) / 2f
-                    head?.pivotY = (head?.height ?: size / 2) * .82f
+                    // Rotate around the lower-middle of the head so it stays visually attached to the torso.
+                    head?.pivotX = (head?.width ?: size) / 2f
+                    head?.pivotY = (head?.height ?: size) * .82f
                     pressStartedAt = System.currentTimeMillis()
                     pressRunnable = Runnable {
                         longPressing = true
@@ -193,9 +194,16 @@ class PetOverlayService : Service() {
                             params.x = startX + dx.toInt(); params.y = startY + dy.toInt()
                             try { wm.updateViewLayout(frame, params) } catch (_: Exception) {}
                         } else {
-                            head?.rotation = (dx / 18f).coerceIn(-7f, 7f)
-                            head?.translationX = (dx * .02f).coerceIn(-dp(3).toFloat(), dp(3).toFloat())
-                            head?.translationY = (dy * .015f).coerceIn(-dp(2).toFloat(), dp(2).toFloat())
+                            // Keep the head drag restrained and let the torso softly follow,
+                            // preventing a visible gap at the neck while preserving the existing gesture.
+                            val headX = (dx * .015f).coerceIn(-dp(2).toFloat(), dp(2).toFloat())
+                            val headY = (dy * .012f).coerceIn(-dp(1).toFloat(), dp(1).toFloat())
+                            val headTilt = (dx / 24f).coerceIn(-4.5f, 4.5f)
+                            head?.rotation = headTilt
+                            head?.translationX = headX
+                            head?.translationY = headY
+                            body?.translationX = headX * .25f
+                            body?.translationY = headY * .6f
                         }
                     }
                     true
@@ -219,7 +227,7 @@ class PetOverlayService : Service() {
                         speak("tap"); pressHead(); spawnEffect(listOf("♡", "✦", "✧", "♥").random(), .72f)
                     } else {
                         head?.animate()?.translationY(0f)?.translationX(0f)?.rotation(0f)?.setDuration(140)?.start()
-                        body?.animate()?.translationY(0f)?.setDuration(140)?.start()
+                        body?.animate()?.translationY(0f)?.translationX(0f)?.setDuration(140)?.start()
                         interactionAnimating = false
                     }
                     longPressing = false
