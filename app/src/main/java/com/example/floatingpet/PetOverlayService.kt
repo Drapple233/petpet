@@ -146,6 +146,21 @@ class PetOverlayService : Service() {
         return START_STICKY
     }
 
+    /**
+     * Prefer user-provided PNGs in res/drawable (mascot_head.png and mascot_body.png).
+     * Keep the bundled assets as a fallback so the app still works before custom PNGs are added.
+     */
+    private fun loadPetImage(view: ImageView, resourceName: String, assetName: String) {
+        val resourceId = resources.getIdentifier(resourceName, "drawable", packageName)
+        if (resourceId != 0) {
+            view.setImageResource(resourceId)
+        } else {
+            assets.open(assetName).use { stream ->
+                view.setImageDrawable(android.graphics.drawable.Drawable.createFromStream(stream, null))
+            }
+        }
+    }
+
     private fun showPet() {
         wm = getSystemService(WINDOW_SERVICE) as WindowManager
         val size = prefs.getInt("size", 220)
@@ -153,11 +168,11 @@ class PetOverlayService : Service() {
         params = WindowManager.LayoutParams((size * 1.30f).toInt(), (size * 1.62f).toInt(), type, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN, PixelFormat.TRANSLUCENT).apply { gravity = Gravity.TOP or Gravity.START; x = 40; y = 100 }
         val frame = FrameLayout(this)
         body = ImageView(this).apply {
-            setImageDrawable(android.graphics.drawable.Drawable.createFromStream(assets.open("mascot_body.png"), null))
+            loadPetImage(this, "mascot_body", "mascot_body.png")
             scaleType = ImageView.ScaleType.FIT_CENTER
         }
         head = ImageView(this).apply {
-            setImageDrawable(android.graphics.drawable.Drawable.createFromStream(assets.open("mascot_head.png"), null))
+            loadPetImage(this, "mascot_head", "mascot_head.png")
             scaleType = ImageView.ScaleType.FIT_CENTER
         }
         speech = TextView(this).apply {
