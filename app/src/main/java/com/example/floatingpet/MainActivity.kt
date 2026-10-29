@@ -59,9 +59,9 @@ class MainActivity : Activity() {
         addSwitch(root, "锁定当前大小", "避免误操作调整尺寸", prefs.getBoolean("sizeLocked", false), pink) { save("sizeLocked", it); updatePet() }
 
         section(root, "☁  自然待机动作", mint)
-        addSlider(root, "身体呼吸幅度", 1, 4, prefs.getInt("breathAmp", 3).coerceIn(1, 4), "", mint) { save("breathAmp", it); updatePet() }
+        addHalfDpSlider(root, "身体呼吸幅度", prefs.getInt("breathAmpHalfDp", 6).coerceIn(1, 8), mint) { save("breathAmpHalfDp", it); updatePet() }
         addSlider(root, "身体呼吸速度", 8, 16, prefs.getInt("breathSpeed", 14).coerceIn(8, 16), "", mint) { save("breathSpeed", it); updatePet() }
-        addSlider(root, "头部呼吸幅度", 1, 4, prefs.getInt("headBreathAmp", 2).coerceIn(1, 4), "", blue) { save("headBreathAmp", it); updatePet() }
+        addHalfDpSlider(root, "头部呼吸幅度", prefs.getInt("headBreathAmpHalfDp", 4).coerceIn(1, 8), blue) { save("headBreathAmpHalfDp", it); updatePet() }
         addSlider(root, "头部呼吸速度", 8, 20, prefs.getInt("headBreathSpeed", 20).coerceIn(8, 20), "", pink) { save("headBreathSpeed", it); updatePet() }
 
         section(root, "♡  弹跳幅度调试", pink)
@@ -75,9 +75,9 @@ class MainActivity : Activity() {
         addHalfDpSlider(root, "长按松手：头部向上弹跳幅度", prefs.getInt("holdHeadJumpHalfDp", 20).coerceIn(4, 28), pink) { save("holdHeadJumpHalfDp", it); updatePet() }
         addHalfDpSlider(root, "长按松手：身体向上弹跳幅度", prefs.getInt("holdBodyJumpHalfDp", 18).coerceIn(4, 28), butter) { save("holdBodyJumpHalfDp", it); updatePet() }
         section(root, "♡  摸头拖拽幅度", blue)
-        root.addView(TextView(this).apply { text = "关闭位置调整模式后，拖动桌宠头部即可测试。四个方向分别限制头部跟随手指的最大位移；下方可拖动小圆点并把读数发给我。" ; textSize = 12f; setTextColor(ink); setPadding(dp(14), dp(10), dp(14), dp(10)); background = rounded(Color.WHITE, blue, 1, 16) }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(7) })
-        addHalfDpSlider(root, "摸头：向上最大幅度", prefs.getInt("headDragUpHalfDp", 8).coerceIn(0, 24), blue) { save("headDragUpHalfDp", it); updatePet() }
-        addHalfDpSlider(root, "摸头：向下最大幅度", prefs.getInt("headDragDownHalfDp", 8).coerceIn(0, 24), mint) { save("headDragDownHalfDp", it); updatePet() }
+        root.addView(TextView(this).apply { text = "关闭位置调整模式后，拖动桌宠头部即可测试。拖拽中心默认下移：向上限制为 2 dp，避免头部顶端脱离身体；向下默认可拖 6 dp。四个方向都可用 0.5 dp 调节，松手会弹回原位。" ; textSize = 12f; setTextColor(ink); setPadding(dp(14), dp(10), dp(14), dp(10)); background = rounded(Color.WHITE, blue, 1, 16) }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(7) })
+        addHalfDpSlider(root, "摸头：向上最大幅度", prefs.getInt("headDragUpHalfDp", 4).coerceIn(0, 12), blue) { save("headDragUpHalfDp", it); updatePet() }
+        addHalfDpSlider(root, "摸头：向下最大幅度", prefs.getInt("headDragDownHalfDp", 12).coerceIn(0, 24), mint) { save("headDragDownHalfDp", it); updatePet() }
         addHalfDpSlider(root, "摸头：向左最大幅度", prefs.getInt("headDragLeftHalfDp", 8).coerceIn(0, 24), pink) { save("headDragLeftHalfDp", it); updatePet() }
         addHalfDpSlider(root, "摸头：向右最大幅度", prefs.getInt("headDragRightHalfDp", 8).coerceIn(0, 24), butter) { save("headDragRightHalfDp", it); updatePet() }
         addDragFeedbackPad(root)
@@ -133,6 +133,7 @@ class MainActivity : Activity() {
         val maxHalfDp = when {
             title.startsWith("点击：") -> 24
             title.startsWith("长按松手：") -> 28
+            title == "摸头：向上最大幅度" -> 12
             title.startsWith("摸头：") -> 24
             else -> 8
         }
