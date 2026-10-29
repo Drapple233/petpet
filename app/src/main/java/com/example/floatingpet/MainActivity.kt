@@ -17,23 +17,23 @@ import android.graphics.drawable.GradientDrawable
 class MainActivity : Activity() {
     private val prefs by lazy { getSharedPreferences("pet_settings", MODE_PRIVATE) }
     private lateinit var status: TextView
-    private val ink = Color.rgb(42, 45, 49)
-    private val mint = Color.rgb(190, 194, 198)
-    private val blue = Color.rgb(175, 180, 185)
-    private val pink = Color.rgb(205, 208, 212)
-    private val butter = Color.rgb(220, 222, 225)
-    private val cream = Color.rgb(245, 246, 247)
+    private val ink = Color.rgb(112, 65, 83)
+    private val mint = Color.rgb(255, 190, 215)
+    private val blue = Color.rgb(255, 160, 199)
+    private val pink = Color.rgb(244, 133, 177)
+    private val butter = Color.rgb(255, 221, 234)
+    private val cream = Color.rgb(255, 246, 250)
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        window.statusBarColor = Color.rgb(239, 240, 242)
+        window.statusBarColor = Color.rgb(255, 241, 247)
         window.navigationBarColor = Color.rgb(239, 240, 242)
         window.decorView.systemUiVisibility = android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or android.view.View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(16), dp(18), dp(16), dp(28))
-            background = GradientDrawable(GradientDrawable.Orientation.TL_BR, intArrayOf(Color.rgb(242, 243, 245), Color.rgb(229, 231, 234), Color.rgb(247, 247, 248)))
+            background = GradientDrawable(GradientDrawable.Orientation.TL_BR, intArrayOf(Color.rgb(255, 244, 249), Color.rgb(255, 224, 237), Color.rgb(255, 250, 252)))
         }
         val scroll = ScrollView(this).apply { clipToPadding = false; addView(root) }
         val hero = LinearLayout(this).apply {
@@ -43,7 +43,7 @@ class MainActivity : Activity() {
             background = rounded(Color.WHITE, pink, 1, 28)
             elevation = dp(5).toFloat()
         }
-        hero.addView(TextView(this).apply { text = "FloatingPet"; textSize = 29f; setTextColor(Color.rgb(38, 40, 43)); typeface = Typeface.create("sans-serif", Typeface.NORMAL); letterSpacing = 0.015f })
+        hero.addView(TextView(this).apply { text = "FloatingPet"; textSize = 29f; setTextColor(Color.rgb(164, 72, 112)); typeface = Typeface.create("sans-serif", Typeface.NORMAL); letterSpacing = 0.015f })
         hero.addView(TextView(this).apply { text = ""; textSize = 14f; setTextColor(ink); setPadding(0, 0, 0, 0) })
         
         root.addView(hero, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(12) })
@@ -77,16 +77,16 @@ class MainActivity : Activity() {
             text = "系统音频捕获需要 Android 的系统确认框，且音乐 App 必须允许被捕获；若捕获不到声音，可改用麦克风模式。麦克风模式只在本机分析音量变化，不保存录音。逐键反馈受输入法和系统版本限制。"
             textSize = 12.5f; setTextColor(ink); setPadding(dp(16), dp(16), dp(16), dp(16)); background = rounded(Color.WHITE, butter, 1, 22); elevation = dp(2).toFloat()
         })
-        root.addView(TextView(this).apply { text = "made with little stars, clouds and love"; gravity = Gravity.CENTER; textSize = 11.5f; setTextColor(Color.rgb(135, 138, 143)); setPadding(0, dp(18), 0, dp(4)) })
+        root.addView(TextView(this).apply { text = "made with little stars, clouds and love"; gravity = Gravity.CENTER; textSize = 11.5f; setTextColor(Color.rgb(190, 139, 160)); setPadding(0, dp(18), 0, dp(4)) })
         setContentView(scroll)
         refreshStatus()
     }
 
     private fun rounded(fill: Int, stroke: Int, strokeDp: Int, radius: Int) = GradientDrawable().apply {
         // Translucent white surfaces over a soft gray background create a restrained glass-card effect.
-        setColor(Color.argb(218, 255, 255, 255))
+        setColor(Color.rgb(255, 255, 255))
         cornerRadius = dp(radius).toFloat()
-        setStroke(dp(strokeDp.coerceAtMost(1)), Color.argb(210, 35, 37, 40))
+        setStroke(dp(strokeDp.coerceAtMost(1)), Color.rgb(244, 133, 177))
     }
     private fun button(label: String, color: Int, action: () -> Unit) = Button(this).apply {
         text = label
@@ -105,13 +105,13 @@ class MainActivity : Activity() {
             text = title.replace("✧", "◇").replace("✿", "○")
             textSize = 18f
             typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
-            setTextColor(Color.rgb(48, 51, 55))
+            setTextColor(Color.rgb(164, 72, 112))
             setPadding(dp(4), dp(23), 0, dp(10))
             letterSpacing = 0.01f
         })
         root.addView(LinearLayout(this).apply {
             background = GradientDrawable().apply {
-                setColor(Color.rgb(105, 109, 114))
+                setColor(Color.rgb(244, 133, 177))
                 cornerRadius = dp(2).toFloat()
             }
         }, LinearLayout.LayoutParams(dp(34), dp(2)).apply { bottomMargin = dp(12); marginStart = dp(4) })
@@ -132,8 +132,8 @@ class MainActivity : Activity() {
         }, LinearLayout.LayoutParams(0, -2, 1f))
         line.addView(Switch(this).apply {
             isChecked = checked
-            thumbTintList = ColorStateList.valueOf(if (checked) Color.rgb(65, 68, 73) else Color.rgb(238, 239, 241))
-            trackTintList = ColorStateList.valueOf(if (checked) Color.rgb(175, 178, 183) else Color.rgb(205, 208, 212))
+            thumbTintList = ColorStateList.valueOf(if (checked) Color.rgb(194, 76, 125) else Color.rgb(255, 235, 243))
+            trackTintList = ColorStateList.valueOf(if (checked) Color.rgb(244, 133, 177) else Color.rgb(255, 190, 215))
             setOnCheckedChangeListener { _, v ->
                 thumbTintList = ColorStateList.valueOf(if (v) Color.rgb(65, 68, 73) else Color.rgb(238, 239, 241))
                 trackTintList = ColorStateList.valueOf(if (v) Color.rgb(175, 178, 183) else Color.rgb(205, 208, 212))
@@ -144,7 +144,7 @@ class MainActivity : Activity() {
         box.addView(TextView(this).apply {
             text = subtitle
             textSize = 11.5f
-            setTextColor(Color.rgb(125, 129, 134))
+            setTextColor(Color.rgb(177, 120, 145))
             setPadding(0, dp(4), 0, 0)
         })
         root.addView(box, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(9) })
@@ -163,7 +163,7 @@ class MainActivity : Activity() {
         }
         val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(16), dp(12), dp(16), dp(10)); background = rounded(Color.WHITE, accent, 1, 22); elevation = dp(2).toFloat() }
         val label = TextView(this).apply { textSize = 13.5f; setTextColor(ink) }
-        val seek = SeekBar(this).apply { max = maxHalfDp - minHalfDp; progress = (initialHalfDp - minHalfDp).coerceIn(0, maxHalfDp - minHalfDp); progressTintList = ColorStateList.valueOf(Color.rgb(75, 79, 84)); thumbTintList = ColorStateList.valueOf(Color.rgb(55, 59, 64)); progressBackgroundTintList = ColorStateList.valueOf(Color.rgb(211, 214, 218)) }
+        val seek = SeekBar(this).apply { max = maxHalfDp - minHalfDp; progress = (initialHalfDp - minHalfDp).coerceIn(0, maxHalfDp - minHalfDp); progressTintList = ColorStateList.valueOf(Color.rgb(231, 111, 160)); thumbTintList = ColorStateList.valueOf(Color.rgb(194, 76, 125)); progressBackgroundTintList = ColorStateList.valueOf(Color.rgb(255, 215, 231)) }
         fun update(v: Int) { label.text = "$title   ${"%.1f".format(v / 2f)} dp" }
         update(minHalfDp + seek.progress)
         seek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
