@@ -59,10 +59,20 @@ class MainActivity : Activity() {
         addSwitch(root, "锁定当前大小", "避免误操作调整尺寸", prefs.getBoolean("sizeLocked", false), pink) { save("sizeLocked", it); updatePet() }
 
         section(root, "☁  自然待机动作", mint)
-        addSlider(root, "身体呼吸幅度（轻柔）", 1, 4, prefs.getInt("breathAmp", 2).coerceIn(1, 4), "", mint) { save("breathAmp", it); updatePet() }
-        addSlider(root, "身体呼吸速度", 8, 16, prefs.getInt("breathSpeed", 12).coerceIn(8, 16), "", mint) { save("breathSpeed", it); updatePet() }
-        addSlider(root, "头部上下呼吸幅度", 1, 4, prefs.getInt("headBreathAmp", 2).coerceIn(1, 4), "", blue) { save("headBreathAmp", it); updatePet() }
-        addSlider(root, "头部呼吸速度", 8, 20, prefs.getInt("headBreathSpeed", 14).coerceIn(8, 20), "", pink) { save("headBreathSpeed", it); updatePet() }
+        root.addView(TextView(this).apply {
+            text = "呼吸已固定：身体幅度 3、速度 14；头部幅度 2、速度 20"
+            textSize = 13f; setTextColor(ink); setPadding(dp(14), dp(12), dp(14), dp(12)); background = rounded(Color.WHITE, mint, 1, 17)
+        }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(7) })
+
+        section(root, "♡  弹跳幅度调试", pink)
+        root.addView(TextView(this).apply {
+            text = "可以边拖动滑块边试点按或长按。单位为 dp；头身幅度尽量接近，避免视觉上分离。长按蓄力会在基础幅度上额外增加最多 2 dp。"
+            textSize = 12f; setTextColor(ink); setPadding(dp(14), dp(10), dp(14), dp(10)); background = rounded(Color.WHITE, pink, 1, 16)
+        }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(7) })
+        addSlider(root, "点击：头部下压幅度", 2, 12, prefs.getInt("clickHeadJump", 6).coerceIn(2, 12), " dp", blue) { save("clickHeadJump", it); updatePet() }
+        addSlider(root, "点击：身体下压幅度", 2, 12, prefs.getInt("clickBodyJump", 5).coerceIn(2, 12), " dp", mint) { save("clickBodyJump", it); updatePet() }
+        addSlider(root, "长按松手：头部弹跳幅度", 2, 14, prefs.getInt("holdHeadJump", 10).coerceIn(2, 14), " dp", pink) { save("holdHeadJump", it); updatePet() }
+        addSlider(root, "长按松手：身体弹跳幅度", 2, 14, prefs.getInt("holdBodyJump", 9).coerceIn(2, 14), " dp", butter) { save("holdBodyJump", it); updatePet() }
 
         section(root, "♡  互动与声音", pink)
         addSwitch(root, "音乐联动", "自动跟随播放状态；未开启音频分析时使用柔和估算节奏", prefs.getBoolean("musicEnabled", true), blue) { save("musicEnabled", it); updatePet(); if (it) openMediaSettings() }
