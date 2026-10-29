@@ -262,7 +262,7 @@ class PetOverlayService : Service() {
     }
 
     private fun startIdleAnimations() {
-        val breath = prefs.getInt("breathAmp", 3).toFloat().coerceIn(1f, 4f)
+        val breath = prefs.getInt("breathAmpHalfDp", 6).coerceIn(1, 8) / 2f
         val bodyMs = (3300 - prefs.getInt("breathSpeed", 14) * 45).toLong().coerceIn(2400L, 3000L)
         bodyBreathAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
             duration = bodyMs; repeatCount = ValueAnimator.INFINITE; repeatMode = ValueAnimator.REVERSE; interpolator = AccelerateDecelerateInterpolator()
@@ -276,7 +276,7 @@ class PetOverlayService : Service() {
             }
             start()
         }
-        val headBreath = prefs.getInt("headBreathAmp", 2).toFloat().coerceIn(1f, 4f)
+        val headBreath = prefs.getInt("headBreathAmpHalfDp", 4).coerceIn(1, 8) / 2f
         val headMs = (2600 - prefs.getInt("headBreathSpeed", 20) * 45).toLong().coerceIn(1500L, 2300L)
         headBreathAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
             duration = headMs; repeatCount = ValueAnimator.INFINITE; repeatMode = ValueAnimator.REVERSE; interpolator = AccelerateDecelerateInterpolator()
