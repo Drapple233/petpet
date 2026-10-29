@@ -45,6 +45,7 @@ class PetOverlayService : Service() {
     private var startY = 0
     private var moved = false
     private var longPressing = false
+    private var chargeCancelledByMove = false
     private var interactionAnimating = false
     private var moveMode = false
     private var typing = false
@@ -162,7 +163,7 @@ class PetOverlayService : Service() {
             when (e.action) {
                 MotionEvent.ACTION_DOWN -> {
                     touchDownX = e.rawX; touchDownY = e.rawY; startX = params.x; startY = params.y
-                    moved = false; longPressing = false; interactionAnimating = true
+                    moved = false; longPressing = false; chargeCancelledByMove = false; interactionAnimating = true
                     head?.pivotX = (head?.width ?: size / 2) / 2f
                     head?.pivotY = (head?.height ?: size / 2) * .82f
                     pressStartedAt = System.currentTimeMillis()
@@ -178,7 +179,17 @@ class PetOverlayService : Service() {
                     if (abs(dx) > 7 || abs(dy) > 7) {
                         moved = true
                         handler.removeCallbacks(pressRunnable ?: Runnable {})
-                        if (moveMode) {
+                        if (longPressing && !moveMode) {
+                            // A stray finger movement cancels charging instead of mixing drag/pat animations.
+                            longPressing = false
+                            chargeCancelledByMove = true
+                            handler.removeCallbacks(pressLoop ?: Runnable {})
+                            pressLoop = null
+                            head?.animate()?.cancel()
+                            body?.animate()?.cancel()
+                            head?.animate()?.translationY(0f)?.translationX(0f)?.rotation(0f)?.scaleX(1f)?.scaleY(1f)?.setDuration(120)?.start()
+                            body?.animate()?.translationY(0f)?.scaleX(1f)?.scaleY(1f)?.setDuration(120)?.start()
+                        } else if (moveMode) {
                             params.x = startX + dx.toInt(); params.y = startY + dy.toInt()
                             try { wm.updateViewLayout(frame, params) } catch (_: Exception) {}
                         } else {
@@ -197,11 +208,18 @@ class PetOverlayService : Service() {
                     if (moveMode) {
                         prefs.edit().putInt("petX", params.x).putInt("petY", params.y).apply()
                         interactionAnimating = false
+                    } else if (chargeCancelledByMove) {
+                        head?.animate()?.translationY(0f)?.translationX(0f)?.rotation(0f)?.scaleX(1f)?.scaleY(1f)?.setDuration(140)?.start()
+                        body?.animate()?.translationY(0f)?.scaleX(1f)?.scaleY(1f)?.setDuration(140)?.start()
+                        interactionAnimating = false
+                        startIdleAnimations()
                     } else if (wasLongPress) {
                         releasePat()
                     } else if (!moved) {
                         speak("tap"); pressHead(); spawnEffect(listOf("♡", "✦", "✧", "♥").random(), .72f)
                     } else {
+                        head?.animate()?.translationY(0f)?.translationX(0f)?.rotation(0f)?.setDuration(140)?.start()
+                        body?.animate()?.translationY(0f)?.setDuration(140)?.start()
                         interactionAnimating = false
                     }
                     longPressing = false
@@ -277,9 +295,10 @@ class PetOverlayService : Service() {
                     // so the head stays visually connected to the body.
                     val tremble = kotlin.math.sin(elapsed / 18.0).toFloat()
                     val density = resources.displayMetrics.density
+                    val patHeadDown = prefs.getInt("patHeadDownHalfDp", 4).coerceIn(0, 12) / 2f
                     val bodyDown = 0.4f + charge * 1.2f + tremble * (0.06f + charge * 0.1f)
                     val extraHeadDown = prefs.getInt("holdHeadDownExtraHalfDp", 3).coerceIn(0, 8) / 2f
-                    head?.translationY = (bodyDown + extraHeadDown * charge + tremble * (0.02f + charge * 0.04f)) * density
+                    head?.translationY = (bodyDown + extraHeadDown * charge + patHeadDown * charge + tremble * (0.02f + charge * 0.04f)) * density
                     head?.rotation = tremble * (0.25f + charge * 0.45f)
                     head?.scaleY = 1f - charge * .004f
                     head?.scaleX = 1f + charge * .002f
@@ -298,8 +317,8 @@ class PetOverlayService : Service() {
         head?.animate()?.cancel()
         body?.animate()?.cancel()
         // Move head and body together through the final bounce to avoid a visible gap.
-        val headJump = -dp(prefs.getInt("clickHeadJump", 6))
-        val bodyJump = -dp(prefs.getInt("clickBodyJump", 5))
+        val headJump = -(prefs.getInt("clickHeadJumpHalfDp", 12) / 2f * resources.displayMetrics.density).toInt()
+        val bodyJump = -(prefs.getInt("clickBodyJumpHalfDp", 10) / 2f * resources.displayMetrics.density).toInt()
         head?.animate()?.translationY(headJump.toFloat())?.rotation(0f)?.scaleY(.975f)?.setDuration(110)?.withEndAction {
             head?.animate()?.translationY(0f)?.scaleY(1f)?.setDuration(230)?.start()
         }?.start()
@@ -378,8 +397,8 @@ class PetOverlayService : Service() {
         head?.animate()?.cancel()
         body?.animate()?.cancel()
         // A restrained rebound: head and body travel in the same direction together.
-        val headBase = prefs.getInt("holdHeadJump", 10).toFloat()
-        val bodyBase = prefs.getInt("holdBodyJump", 9).toFloat()
+        val headBase = prefs.getInt("holdHeadJumpHalfDp", 20) / 2f
+        val bodyBase = prefs.getInt("holdBodyJumpHalfDp", 18) / 2f
         val rebound = (headBase + charge * 2.0f).coerceAtMost(18f) * resources.displayMetrics.density
         val bodyRebound = (bodyBase + charge * 2.0f).coerceAtMost(18f) * resources.displayMetrics.density
         head?.animate()?.translationY(-rebound)?.rotation(0f)?.scaleY(1.02f)?.scaleX(.99f)?.setDuration(145)?.withEndAction {
