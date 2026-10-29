@@ -74,8 +74,13 @@ class MainActivity : Activity() {
         addHalfDpSlider(root, "长按蓄力：头部比身体额外下压", prefs.getInt("holdHeadDownExtraHalfDp", 3).coerceIn(0, 8), pink) { save("holdHeadDownExtraHalfDp", it); updatePet() }
         addHalfDpSlider(root, "长按松手：头部向上弹跳幅度", prefs.getInt("holdHeadJumpHalfDp", 20).coerceIn(4, 28), pink) { save("holdHeadJumpHalfDp", it); updatePet() }
         addHalfDpSlider(root, "长按松手：身体向上弹跳幅度", prefs.getInt("holdBodyJumpHalfDp", 18).coerceIn(4, 28), butter) { save("holdBodyJumpHalfDp", it); updatePet() }
-        addHalfDpSlider(root, "摸头：头部下压幅度", prefs.getInt("patHeadDownHalfDp", 4).coerceIn(0, 12), blue) { save("patHeadDownHalfDp", it); updatePet() }
-
+        section(root, "♡  摸头拖拽幅度", blue)
+        root.addView(TextView(this).apply { text = "关闭位置调整模式后，拖动桌宠头部即可测试。四个方向分别限制头部跟随手指的最大位移；下方可拖动小圆点并把读数发给我。" ; textSize = 12f; setTextColor(ink); setPadding(dp(14), dp(10), dp(14), dp(10)); background = rounded(Color.WHITE, blue, 1, 16) }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(7) })
+        addHalfDpSlider(root, "摸头：向上最大幅度", prefs.getInt("headDragUpHalfDp", 8).coerceIn(0, 24), blue) { save("headDragUpHalfDp", it); updatePet() }
+        addHalfDpSlider(root, "摸头：向下最大幅度", prefs.getInt("headDragDownHalfDp", 8).coerceIn(0, 24), mint) { save("headDragDownHalfDp", it); updatePet() }
+        addHalfDpSlider(root, "摸头：向左最大幅度", prefs.getInt("headDragLeftHalfDp", 8).coerceIn(0, 24), pink) { save("headDragLeftHalfDp", it); updatePet() }
+        addHalfDpSlider(root, "摸头：向右最大幅度", prefs.getInt("headDragRightHalfDp", 8).coerceIn(0, 24), butter) { save("headDragRightHalfDp", it); updatePet() }
+        addDragFeedbackPad(root)
         section(root, "♡  互动与声音", pink)
         addSwitch(root, "音乐联动", "自动跟随播放状态；未开启音频分析时使用柔和估算节奏", prefs.getBoolean("musicEnabled", true), blue) { save("musicEnabled", it); updatePet(); if (it) openMediaSettings() }
         root.addView(button("开启系统音频节拍捕获  ♫", blue) { requestSystemAudioCapture() }, fullWidth())
@@ -128,7 +133,7 @@ class MainActivity : Activity() {
         val maxHalfDp = when {
             title.startsWith("点击：") -> 24
             title.startsWith("长按松手：") -> 28
-            title == "摸头：头部下压幅度" -> 12
+            title.startsWith("摸头：") -> 24
             else -> 8
         }
         val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(14), dp(8), dp(14), dp(6)); background = rounded(Color.WHITE, accent, 1, 17) }
@@ -144,6 +149,24 @@ class MainActivity : Activity() {
         box.addView(label)
         box.addView(seek)
         root.addView(box, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(7) })
+    }
+    private fun addDragFeedbackPad(root: LinearLayout) {
+        val wrap = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(14), dp(10), dp(14), dp(10)); background = rounded(Color.WHITE, mint, 1, 18) }
+        val readout = TextView(this).apply { text = "拖动测试：X 0.0 dp · Y 0.0 dp"; textSize = 13f; setTextColor(ink) }
+        val pad = FrameLayout(this).apply { background = rounded(Color.rgb(246, 252, 251), blue, 1, 18) }
+        val center = TextView(this).apply { text = "✿"; textSize = 26f; gravity = Gravity.CENTER; setTextColor(Color.rgb(89, 139, 154)); background = rounded(Color.WHITE, pink, 2, 28) }
+        val extent = dp(48)
+        pad.addView(center, FrameLayout.LayoutParams(extent, extent, Gravity.CENTER))
+        center.setOnTouchListener { v, e ->
+            when (e.action) {
+                android.view.MotionEvent.ACTION_DOWN -> true
+                android.view.MotionEvent.ACTION_MOVE -> { val x=(v.translationX+e.x-extent/2f).coerceIn(-dp(52).toFloat(),dp(52).toFloat()); val y=(v.translationY+e.y-extent/2f).coerceIn(-dp(52).toFloat(),dp(52).toFloat()); v.translationX=x; v.translationY=y; readout.text="测试读数：X ${"%.1f".format(x/resources.displayMetrics.density)} dp · Y ${"%.1f".format(y/resources.displayMetrics.density)} dp"; true }
+                android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> { readout.text="你选的幅度：X ${"%.1f".format(v.translationX/resources.displayMetrics.density)} dp · Y ${"%.1f".format(v.translationY/resources.displayMetrics.density)} dp（把数值发给我即可）"; true }
+                else -> true
+            }
+        }
+        wrap.addView(readout); wrap.addView(pad, LinearLayout.LayoutParams(-1, dp(168)).apply { topMargin=dp(8) })
+        root.addView(wrap, LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(8) })
     }
     private fun addSlider(root: LinearLayout, title: String, min: Int, max: Int, initial: Int, suffix: String, accent: Int, changed: (Int) -> Unit) {
         val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(14), dp(8), dp(14), dp(6)); background = rounded(Color.WHITE, accent, 1, 17) }
