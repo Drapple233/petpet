@@ -194,16 +194,17 @@ class PetOverlayService : Service() {
                             params.x = startX + dx.toInt(); params.y = startY + dy.toInt()
                             try { wm.updateViewLayout(frame, params) } catch (_: Exception) {}
                         } else {
-                            // Keep the head drag restrained and let the torso softly follow,
-                            // preventing a visible gap at the neck while preserving the existing gesture.
+                            // Allow a clear downward petting motion while keeping the head
+                            // and torso moving together so the neck connection stays intact.
+                            val density = resources.displayMetrics.density
                             val headX = (dx * .015f).coerceIn(-dp(2).toFloat(), dp(2).toFloat())
-                            val headY = (dy * .012f).coerceIn(-dp(1).toFloat(), dp(1).toFloat())
+                            val headY = (dy * .035f).coerceIn(-dp(2).toFloat(), dp(9).toFloat())
                             val headTilt = (dx / 24f).coerceIn(-4.5f, 4.5f)
                             head?.rotation = headTilt
                             head?.translationX = headX
                             head?.translationY = headY
-                            body?.translationX = headX * .25f
-                            body?.translationY = headY * .6f
+                            body?.translationX = headX * .35f
+                            body?.translationY = headY * .88f
                         }
                     }
                     true
