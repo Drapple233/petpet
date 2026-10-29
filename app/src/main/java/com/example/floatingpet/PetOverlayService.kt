@@ -29,6 +29,18 @@ class PetOverlayService : Service() {
         const val ACTION_TYPING = "com.example.floatingpet.TYPING"
     }
     private val prefs by lazy { getSharedPreferences("pet_settings", MODE_PRIVATE) }
+
+    // Fixed animation tuning values (intentionally not exposed in the app UI).
+    private val bodyBreathAmplitudeDp = 1.5f
+    private val bodyBreathSpeed = 13
+    private val headBreathAmplitudeDp = 1.5f
+    private val headBreathSpeed = 17
+    private val clickHeadJumpDp = 7.0f
+    private val clickBodyJumpDp = 6.0f
+    private val holdExtraHeadDownDp = 1.0f
+    private val holdHeadReboundDp = 10.5f
+    private val holdBodyReboundDp = 9.0f
+    private val patHeadDownDp = 6.0f
     private lateinit var wm: WindowManager
     private var container: FrameLayout? = null
     private var head: ImageView? = null
@@ -260,28 +272,28 @@ class PetOverlayService : Service() {
     }
 
     private fun startIdleAnimations() {
-        val breath = prefs.getInt("breathAmpHalfDp", 6).coerceIn(1, 8) / 2f
-        val bodyMs = (3300 - prefs.getInt("breathSpeed", 14) * 45).toLong().coerceIn(2400L, 3000L)
+        val breath = bodyBreathAmplitudeDp
+        val bodyMs = (3300 - bodyBreathSpeed * 45).toLong().coerceIn(2400L, 3000L)
         bodyBreathAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
             duration = bodyMs; repeatCount = ValueAnimator.INFINITE; repeatMode = ValueAnimator.REVERSE; interpolator = AccelerateDecelerateInterpolator()
             addUpdateListener { a ->
                 val t = a.animatedValue as Float
                 if (!interactionAnimating && !longPressing && !moved) {
-                    body?.translationY = -(breath.coerceAtMost(3f) * .18f * resources.displayMetrics.density * t)
+                    body?.translationY = -(breath * resources.displayMetrics.density * t)
                     body?.scaleY = 1f + .003f * t
                     body?.scaleX = 1f + .002f * t
                 }
             }
             start()
         }
-        val headBreath = prefs.getInt("headBreathAmpHalfDp", 4).coerceIn(1, 8) / 2f
-        val headMs = (2600 - prefs.getInt("headBreathSpeed", 20) * 45).toLong().coerceIn(1500L, 2300L)
+        val headBreath = headBreathAmplitudeDp
+        val headMs = (2600 - headBreathSpeed * 45).toLong().coerceIn(1500L, 2300L)
         headBreathAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
             duration = headMs; repeatCount = ValueAnimator.INFINITE; repeatMode = ValueAnimator.REVERSE; interpolator = AccelerateDecelerateInterpolator()
             addUpdateListener { a ->
                 val t = a.animatedValue as Float
                 if (!interactionAnimating && !longPressing && !moved) {
-                    head?.translationY = -(headBreath * .65f * resources.displayMetrics.density * t)
+                    head?.translationY = -(headBreath * resources.displayMetrics.density * t)
                     head?.scaleY = 1f + .003f * t
                 }
             }
@@ -301,9 +313,9 @@ class PetOverlayService : Service() {
                     // so the head stays visually connected to the body.
                     val tremble = kotlin.math.sin(elapsed / 18.0).toFloat()
                     val density = resources.displayMetrics.density
-                    val patHeadDown = prefs.getInt("patHeadDownHalfDp", 4).coerceIn(0, 12) / 2f
+                    val patHeadDown = patHeadDownDp
                     val bodyDown = 0.4f + charge * 1.2f + tremble * (0.06f + charge * 0.1f)
-                    val extraHeadDown = prefs.getInt("holdHeadDownExtraHalfDp", 3).coerceIn(0, 8) / 2f
+                    val extraHeadDown = holdExtraHeadDownDp
                     head?.translationY = (bodyDown + extraHeadDown * charge + patHeadDown * charge + tremble * (0.02f + charge * 0.04f)) * density
                     head?.rotation = tremble * (0.25f + charge * 0.45f)
                     head?.scaleY = 1f - charge * .004f
@@ -323,8 +335,8 @@ class PetOverlayService : Service() {
         head?.animate()?.cancel()
         body?.animate()?.cancel()
         // Move head and body together through the final bounce to avoid a visible gap.
-        val headJump = -(prefs.getInt("clickHeadJumpHalfDp", 12) / 2f * resources.displayMetrics.density).toInt()
-        val bodyJump = -(prefs.getInt("clickBodyJumpHalfDp", 10) / 2f * resources.displayMetrics.density).toInt()
+        val headJump = -(clickHeadJumpDp * resources.displayMetrics.density).toInt()
+        val bodyJump = -(clickBodyJumpDp * resources.displayMetrics.density).toInt()
         head?.animate()?.translationY(headJump.toFloat())?.rotation(0f)?.scaleY(.975f)?.setDuration(110)?.withEndAction {
             head?.animate()?.translationY(0f)?.scaleY(1f)?.setDuration(230)?.start()
         }?.start()
@@ -403,10 +415,8 @@ class PetOverlayService : Service() {
         head?.animate()?.cancel()
         body?.animate()?.cancel()
         // A restrained rebound: head and body travel in the same direction together.
-        val headBase = prefs.getInt("holdHeadJumpHalfDp", 20) / 2f
-        val bodyBase = prefs.getInt("holdBodyJumpHalfDp", 18) / 2f
-        val rebound = (headBase + charge * 2.0f).coerceAtMost(18f) * resources.displayMetrics.density
-        val bodyRebound = (bodyBase + charge * 2.0f).coerceAtMost(18f) * resources.displayMetrics.density
+        val rebound = holdHeadReboundDp * resources.displayMetrics.density
+        val bodyRebound = holdBodyReboundDp * resources.displayMetrics.density
         head?.animate()?.translationY(-rebound)?.rotation(0f)?.scaleY(1.02f)?.scaleX(.99f)?.setDuration(145)?.withEndAction {
             head?.animate()?.translationY(0f)?.scaleX(1f)?.scaleY(1f)?.setDuration(250)?.start()
         }?.start()
