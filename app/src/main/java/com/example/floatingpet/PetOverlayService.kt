@@ -193,16 +193,9 @@ class PetOverlayService : Service() {
                             params.x = startX + dx.toInt(); params.y = startY + dy.toInt()
                             try { wm.updateViewLayout(frame, params) } catch (_: Exception) {}
                         } else {
-                            val density = resources.displayMetrics.density
-                            val leftMax = prefs.getInt("headDragLeftHalfDp", 8).coerceIn(0, 24) / 2f * density
-                            val rightMax = prefs.getInt("headDragRightHalfDp", 8).coerceIn(0, 24) / 2f * density
-                            val upMax = prefs.getInt("headDragUpHalfDp", 8).coerceIn(0, 24) / 2f * density
-                            val downMax = prefs.getInt("headDragDownHalfDp", 8).coerceIn(0, 24) / 2f * density
-                            val headX = dx.coerceIn(-leftMax, rightMax)
-                            val headY = dy.coerceIn(-upMax, downMax)
-                            head?.rotation = (headX / density * 1.1f).coerceIn(-12f, 12f)
-                            head?.translationX = headX
-                            head?.translationY = headY
+                            head?.rotation = (dx / 18f).coerceIn(-7f, 7f)
+                            head?.translationX = (dx * .02f).coerceIn(-dp(3).toFloat(), dp(3).toFloat())
+                            head?.translationY = (dy * .015f).coerceIn(-dp(2).toFloat(), dp(2).toFloat())
                         }
                     }
                     true
@@ -230,7 +223,6 @@ class PetOverlayService : Service() {
                         interactionAnimating = false
                     }
                     longPressing = false
-                    moved = false
                     head?.animate()?.rotation(0f)?.translationX(0f)?.setDuration(180)?.start()
                     true
                 }
@@ -269,9 +261,9 @@ class PetOverlayService : Service() {
             addUpdateListener { a ->
                 val t = a.animatedValue as Float
                 if (!interactionAnimating && !longPressing && !moved) {
-                    body?.translationY = -(breath.coerceAtMost(4f) * .55f * resources.displayMetrics.density * t)
-                    body?.scaleY = 1f + .012f * t
-                    body?.scaleX = 1f + .006f * t
+                    body?.translationY = -(breath.coerceAtMost(3f) * .18f * resources.displayMetrics.density * t)
+                    body?.scaleY = 1f + .003f * t
+                    body?.scaleX = 1f + .002f * t
                 }
             }
             start()
@@ -283,8 +275,8 @@ class PetOverlayService : Service() {
             addUpdateListener { a ->
                 val t = a.animatedValue as Float
                 if (!interactionAnimating && !longPressing && !moved) {
-                    head?.translationY = -(headBreath * .85f * resources.displayMetrics.density * t)
-                    head?.scaleY = 1f + .009f * t
+                    head?.translationY = -(headBreath * .65f * resources.displayMetrics.density * t)
+                    head?.scaleY = 1f + .003f * t
                 }
             }
             start()
