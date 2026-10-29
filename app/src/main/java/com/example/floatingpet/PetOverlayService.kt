@@ -38,9 +38,9 @@ class PetOverlayService : Service() {
     private val clickHeadJumpDp = 7.0f
     private val clickBodyJumpDp = 6.0f
     private val holdExtraHeadDownDp = 1.0f
-    private val holdHeadReboundDp = 9.5f
-    private val holdBodyReboundDp = 8.0f
-    private val patHeadDownDp = 6.0f
+    private val holdHeadReboundDp = 8.5f
+    private val holdBodyReboundDp = 7.0f
+    private val patHeadDownDp = 5.0f
     private lateinit var wm: WindowManager
     private var container: FrameLayout? = null
     private var head: ImageView? = null
@@ -151,7 +151,7 @@ class PetOverlayService : Service() {
         wm = getSystemService(WINDOW_SERVICE) as WindowManager
         val size = prefs.getInt("size", 220)
         val type = if (Build.VERSION.SDK_INT >= 26) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY else WindowManager.LayoutParams.TYPE_PHONE
-        params = WindowManager.LayoutParams((size * 1.30f).toInt(), (size * 1.62f).toInt(), type, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN, PixelFormat.TRANSLUCENT).apply { gravity = Gravity.TOP or Gravity.START; x = 40; y = 100 }
+        params = WindowManager.LayoutParams((size * 1.30f).toInt(), (size * 1.70f).toInt(), type, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN, PixelFormat.TRANSLUCENT).apply { gravity = Gravity.TOP or Gravity.START; x = 40; y = 100 }
         val frame = FrameLayout(this).apply { clipChildren = false; clipToPadding = false }
         body = ImageView(this).apply {
             setImageDrawable(android.graphics.drawable.Drawable.createFromStream(assets.open("mascot_body.png"), null))
@@ -173,12 +173,12 @@ class PetOverlayService : Service() {
                 setStroke(dp(2), Color.BLACK)
             }
             visibility = android.view.View.GONE
-            maxLines = 2
+            maxLines = 3
         }
         // Reserve a compact strip above the pet for dialogue so the bubble never covers the face.
         frame.addView(body, FrameLayout.LayoutParams(size, size, Gravity.CENTER_HORIZONTAL or Gravity.TOP).apply { topMargin = (size * .52f).toInt() })
         frame.addView(head, FrameLayout.LayoutParams((size * .82f).toInt(), (size * .7f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = (size * .25f).toInt() })
-        frame.addView(speech, FrameLayout.LayoutParams((size * 1.22f).toInt().coerceAtMost((size * 1.28f).toInt()), -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = -dp(6) })
+        frame.addView(speech, FrameLayout.LayoutParams((size * 1.30f).toInt(), -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = -dp(6) })
         frame.setOnTouchListener { _, e ->
             when (e.action) {
                 MotionEvent.ACTION_DOWN -> {
@@ -264,15 +264,15 @@ class PetOverlayService : Service() {
         val frame = container ?: return
         val size = prefs.getInt("size", 220)
         moveMode = prefs.getBoolean("moveMode", false)
-        if (params.width != (size * 1.30f).toInt() || params.height != (size * 1.62f).toInt()) {
-            params.width = (size * 1.30f).toInt(); params.height = (size * 1.62f).toInt()
+        if (params.width != (size * 1.30f).toInt() || params.height != (size * 1.70f).toInt()) {
+            params.width = (size * 1.30f).toInt(); params.height = (size * 1.70f).toInt()
             try { wm.updateViewLayout(frame, params) } catch (_: Exception) {}
         }
         if (prefs.contains("petX")) params.x = prefs.getInt("petX", params.x)
         if (prefs.contains("petY")) params.y = prefs.getInt("petY", params.y)
         body?.layoutParams = FrameLayout.LayoutParams(size, size, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = (size * .52f).toInt() }
         head?.layoutParams = FrameLayout.LayoutParams((size * .82f).toInt(), (size * .7f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = (size * .25f).toInt() }
-        speech?.layoutParams = FrameLayout.LayoutParams((size * 1.22f).toInt(), -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = -dp(6) }
+        speech?.layoutParams = FrameLayout.LayoutParams((size * 1.30f).toInt(), -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(2) }
         body?.requestLayout(); head?.requestLayout()
         try { wm.updateViewLayout(frame, params) } catch (_: Exception) {}
         bodyBreathAnimator?.cancel(); headBreathAnimator?.cancel(); idleAnimator?.cancel()
