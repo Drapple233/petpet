@@ -1,4 +1,4 @@
-name: Build FloatingPet APK
+name: Build PetPet APK
 on:
   workflow_dispatch:
   push:
@@ -24,9 +24,11 @@ jobs:
           gradle-version: '8.9'
       - name: Build debug APK
         run: gradle --no-daemon assembleDebug
+      - name: Rename APK
+        run: cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/PetPet.apk
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: FloatingPet-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: PetPet
+          path: app/build/outputs/apk/debug/PetPet.apk
           if-no-files-found: error
