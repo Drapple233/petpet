@@ -331,10 +331,10 @@ class PetOverlayService : Service() {
                     val patHeadDown = patHeadDownDp * scale
                     val bodyDown = (0.4f + charge * 1.2f + tremble * (0.06f + charge * 0.1f)) * scale
                     val extraHeadDown = holdExtraHeadDownDp * scale
-                    head?.translationY = (bodyDown + extraHeadDown * charge + patHeadDown * charge + tremble * (0.02f + charge * 0.04f)) * density
-                    head?.rotation = tremble * (0.25f + charge * 0.45f)
-                    head?.scaleY = 1f - charge * .004f
-                    head?.scaleX = 1f + charge * .002f
+                    head?.translationY = (bodyDown + extraHeadDown * charge + patHeadDown * charge + tremble * (0.02f + charge * 0.04f) * scale) * density
+                    head?.rotation = tremble * (0.25f + charge * 0.45f) * scale
+                    head?.scaleY = 1f - charge * .004f * scale
+                    head?.scaleX = 1f + charge * .002f * scale
                     body?.translationY = bodyDown * density
                     handler.postDelayed(this, 16)
                 }
@@ -352,7 +352,7 @@ class PetOverlayService : Service() {
         // Move head and body together through the final bounce to avoid a visible gap.
         val headJump = -(clickHeadJumpDp * sizeScale() * resources.displayMetrics.density).toInt()
         val bodyJump = -(clickBodyJumpDp * sizeScale() * resources.displayMetrics.density).toInt()
-        head?.animate()?.translationY(headJump.toFloat())?.rotation(0f)?.scaleY(.975f)?.setDuration(110)?.withEndAction {
+        head?.animate()?.translationY(headJump.toFloat())?.rotation(0f)?.scaleY(1f - .025f * sizeScale())?.setDuration(110)?.withEndAction {
             head?.animate()?.translationY(0f)?.scaleY(1f)?.setDuration(230)?.start()
         }?.start()
         body?.animate()?.translationY(bodyJump.toFloat())?.setDuration(110)?.withEndAction {
