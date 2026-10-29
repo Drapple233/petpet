@@ -29,6 +29,11 @@ class PetOverlayService : Service() {
         const val ACTION_TYPING = "com.example.floatingpet.TYPING"
     }
     private val prefs by lazy { getSharedPreferences("pet_settings", MODE_PRIVATE) }
+    // 500 px is the reference size; motion and dialogue scale with the size slider.
+    private fun sizeScale(size: Int = prefs.getInt("size", 220)) = (size / 500f).coerceIn(0.24f, 1f)
+    private fun headTop(size: Int) = maxOf((size * .25f).toInt(), dp(46f * sizeScale(size)))
+    private fun bodyTop(size: Int) = maxOf((size * .52f).toInt(), headTop(size) + (size * .27f).toInt())
+    private fun overlayHeight(size: Int) = maxOf((size * 1.70f).toInt(), bodyTop(size) + size + dp(8f * sizeScale(size)))
 
     // Fixed animation tuning values (intentionally not exposed in the app UI).
     private val bodyBreathAmplitudeDp = 1.0f
@@ -151,7 +156,7 @@ class PetOverlayService : Service() {
         wm = getSystemService(WINDOW_SERVICE) as WindowManager
         val size = prefs.getInt("size", 220)
         val type = if (Build.VERSION.SDK_INT >= 26) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY else WindowManager.LayoutParams.TYPE_PHONE
-        params = WindowManager.LayoutParams((size * 1.30f).toInt(), (size * 1.70f).toInt(), type, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN, PixelFormat.TRANSLUCENT).apply { gravity = Gravity.TOP or Gravity.START; x = 40; y = 100 }
+        params = WindowManager.LayoutParams((size * 1.30f).toInt(), overlayHeight(size), type, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN, PixelFormat.TRANSLUCENT).apply { gravity = Gravity.TOP or Gravity.START; x = 40; y = 100 }
         val frame = FrameLayout(this).apply { clipChildren = false; clipToPadding = false }
         body = ImageView(this).apply {
             setImageDrawable(android.graphics.drawable.Drawable.createFromStream(assets.open("mascot_body.png"), null))
@@ -162,22 +167,23 @@ class PetOverlayService : Service() {
             scaleType = ImageView.ScaleType.FIT_CENTER
         }
         speech = TextView(this).apply {
-            textSize = 12f
+            textSize = (12f * sizeScale(size)).coerceAtLeast(9f)
             setTextColor(Color.rgb(92, 83, 66))
             gravity = Gravity.CENTER
             includeFontPadding = false
-            setPadding(dp(12), dp(8), dp(12), dp(8))
+            val uiScale = sizeScale(size)
+            setPadding(dp(12f * uiScale), dp(8f * uiScale), dp(12f * uiScale), dp(8f * uiScale))
             background = GradientDrawable().apply {
                 setColor(Color.WHITE)
-                cornerRadius = dp(20).toFloat()
-                setStroke(dp(2), Color.BLACK)
+                cornerRadius = dp(20f * sizeScale(size)).toFloat()
+                setStroke(dp(2f * sizeScale(size)).coerceAtLeast(1), Color.BLACK)
             }
             visibility = android.view.View.GONE
             maxLines = 3
         }
         // Reserve a compact strip above the pet for dialogue so the bubble never covers the face.
-        frame.addView(body, FrameLayout.LayoutParams(size, size, Gravity.CENTER_HORIZONTAL or Gravity.TOP).apply { topMargin = (size * .52f).toInt() })
-        frame.addView(head, FrameLayout.LayoutParams((size * .82f).toInt(), (size * .7f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = (size * .25f).toInt() })
+        frame.addView(body, FrameLayout.LayoutParams(size, size, Gravity.CENTER_HORIZONTAL or Gravity.TOP).apply { topMargin = bodyTop(size) })
+        frame.addView(head, FrameLayout.LayoutParams((size * .82f).toInt(), (size * .7f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = headTop(size) })
         frame.addView(speech, FrameLayout.LayoutParams((size * 1.30f).toInt(), -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(2) })
         frame.setOnTouchListener { _, e ->
             when (e.action) {
@@ -216,8 +222,8 @@ class PetOverlayService : Service() {
                         } else {
                             // Restore the original head-follow gesture and use asymmetric,
                             // subtle asymmetric torso compensation: less on downward petting, more on upward petting.
-                            val headX = (dx * .02f).coerceIn(-dp(3).toFloat(), dp(3).toFloat())
-                            val headY = (dy * .015f).coerceIn(-dp(2).toFloat(), dp(2).toFloat())
+                            val headX = (dx * .02f).coerceIn(-dp(3f * sizeScale(size)).toFloat(), dp(3f * sizeScale(size)).toFloat())
+                            val headY = (dy * .015f).coerceIn(-dp(2f * sizeScale(size)).toFloat(), dp(2f * sizeScale(size)).toFloat())
                             head?.rotation = (dx / 18f).coerceIn(-7f, 7f)
                             head?.translationX = headX
                             head?.translationY = headY
@@ -264,8 +270,8 @@ class PetOverlayService : Service() {
         val frame = container ?: return
         val size = prefs.getInt("size", 220)
         moveMode = prefs.getBoolean("moveMode", false)
-        if (params.width != (size * 1.30f).toInt() || params.height != (size * 1.70f).toInt()) {
-            params.width = (size * 1.30f).toInt(); params.height = (size * 1.70f).toInt()
+        if (params.width != (size * 1.30f).toInt() || params.height != overlayHeight(size)) {
+            params.width = (size * 1.30f).toInt(); params.height = overlayHeight(size)
             try { wm.updateViewLayout(frame, params) } catch (_: Exception) {}
         }
         if (prefs.contains("petX")) params.x = prefs.getInt("petX", params.x)
@@ -287,7 +293,7 @@ class PetOverlayService : Service() {
             addUpdateListener { a ->
                 val t = a.animatedValue as Float
                 if (!interactionAnimating && !longPressing && !moved) {
-                    body?.translationY = -(breath * resources.displayMetrics.density * t)
+                    body?.translationY = -(breath * sizeScale() * resources.displayMetrics.density * t)
                     body?.scaleY = 1f + .003f * t
                     body?.scaleX = 1f + .002f * t
                 }
@@ -301,7 +307,7 @@ class PetOverlayService : Service() {
             addUpdateListener { a ->
                 val t = a.animatedValue as Float
                 if (!interactionAnimating && !longPressing && !moved) {
-                    head?.translationY = -(headBreath * resources.displayMetrics.density * t)
+                    head?.translationY = -(headBreath * sizeScale() * resources.displayMetrics.density * t)
                     head?.scaleY = 1f + .003f * t
                 }
             }
@@ -321,9 +327,10 @@ class PetOverlayService : Service() {
                     // so the head stays visually connected to the body.
                     val tremble = kotlin.math.sin(elapsed / 18.0).toFloat()
                     val density = resources.displayMetrics.density
-                    val patHeadDown = patHeadDownDp
-                    val bodyDown = 0.4f + charge * 1.2f + tremble * (0.06f + charge * 0.1f)
-                    val extraHeadDown = holdExtraHeadDownDp
+                    val scale = sizeScale()
+                    val patHeadDown = patHeadDownDp * scale
+                    val bodyDown = (0.4f + charge * 1.2f + tremble * (0.06f + charge * 0.1f)) * scale
+                    val extraHeadDown = holdExtraHeadDownDp * scale
                     head?.translationY = (bodyDown + extraHeadDown * charge + patHeadDown * charge + tremble * (0.02f + charge * 0.04f)) * density
                     head?.rotation = tremble * (0.25f + charge * 0.45f)
                     head?.scaleY = 1f - charge * .004f
@@ -343,8 +350,8 @@ class PetOverlayService : Service() {
         head?.animate()?.cancel()
         body?.animate()?.cancel()
         // Move head and body together through the final bounce to avoid a visible gap.
-        val headJump = -(clickHeadJumpDp * resources.displayMetrics.density).toInt()
-        val bodyJump = -(clickBodyJumpDp * resources.displayMetrics.density).toInt()
+        val headJump = -(clickHeadJumpDp * sizeScale() * resources.displayMetrics.density).toInt()
+        val bodyJump = -(clickBodyJumpDp * sizeScale() * resources.displayMetrics.density).toInt()
         head?.animate()?.translationY(headJump.toFloat())?.rotation(0f)?.scaleY(.975f)?.setDuration(110)?.withEndAction {
             head?.animate()?.translationY(0f)?.scaleY(1f)?.setDuration(230)?.start()
         }?.start()
@@ -356,9 +363,9 @@ class PetOverlayService : Service() {
 
     private fun beatPulse(realBeat: Boolean = false) {
         head?.animate()?.cancel()
-        val drop = if (realBeat) dp(2.0f).toFloat() else dp(1.0f).toFloat()
+        val drop = dp((if (realBeat) 2.0f else 1.0f) * sizeScale()).toFloat()
         head?.animate()?.translationY(drop)?.rotation(2.2f)?.setDuration(85)?.withEndAction {
-            head?.animate()?.translationY(-dp(1.0f).toFloat())?.rotation(-1.4f)?.setDuration(95)?.withEndAction {
+            head?.animate()?.translationY(-dp(1.0f * sizeScale()).toFloat())?.rotation(-1.4f)?.setDuration(95)?.withEndAction {
                 head?.animate()?.translationY(0f)?.rotation(0f)?.setDuration(110)?.start()
             }?.start()
         }?.start()
@@ -417,10 +424,10 @@ class PetOverlayService : Service() {
 
     private fun typingPulse() {
         head?.animate()?.cancel()
-        head?.animate()?.translationY(dp(2).toFloat())?.rotation(.4f)?.setDuration(70)?.withEndAction {
+        head?.animate()?.translationY(dp(2f * sizeScale()).toFloat())?.rotation(.4f)?.setDuration(70)?.withEndAction {
             head?.animate()?.translationY(0f)?.rotation(0f)?.setDuration(130)?.start()
         }?.start()
-        body?.animate()?.translationY(-dp(1).toFloat())?.setDuration(90)?.withEndAction {
+        body?.animate()?.translationY(-dp(1f * sizeScale()).toFloat())?.setDuration(90)?.withEndAction {
             body?.animate()?.translationY(0f)?.setDuration(150)?.start()
         }?.start()
     }
@@ -433,8 +440,8 @@ class PetOverlayService : Service() {
         head?.animate()?.cancel()
         body?.animate()?.cancel()
         // A restrained rebound: head and body travel in the same direction together.
-        val rebound = holdHeadReboundDp * resources.displayMetrics.density
-        val bodyRebound = holdBodyReboundDp * resources.displayMetrics.density
+        val rebound = holdHeadReboundDp * sizeScale() * resources.displayMetrics.density
+        val bodyRebound = holdBodyReboundDp * sizeScale() * resources.displayMetrics.density
         head?.animate()?.translationY(-rebound)?.rotation(0f)?.scaleY(1.02f)?.scaleX(.99f)?.setDuration(145)?.withEndAction {
             head?.animate()?.translationY(0f)?.scaleX(1f)?.scaleY(1f)?.setDuration(250)?.start()
         }?.start()
