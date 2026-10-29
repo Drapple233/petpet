@@ -44,8 +44,8 @@ class MainActivity : Activity() {
             elevation = dp(5).toFloat()
         }
         hero.addView(TextView(this).apply { text = "FloatingPet"; textSize = 29f; setTextColor(Color.rgb(38, 40, 43)); typeface = Typeface.create("sans-serif", Typeface.NORMAL); letterSpacing = 0.015f })
-        hero.addView(TextView(this).apply { text = "小小的陪伴，也要软乎乎的。  ♡"; textSize = 14f; setTextColor(ink); setPadding(0, dp(7), 0, 0) })
-        hero.addView(TextView(this).apply { text = "呼吸 · 摸头蓄力 · 节拍点头 · 漂浮星星"; textSize = 12f; setTextColor(Color.rgb(125, 129, 134)); setPadding(0, dp(12), 0, 0) })
+        hero.addView(TextView(this).apply { text = ""; textSize = 14f; setTextColor(ink); setPadding(0, 0, 0, 0) })
+        
         root.addView(hero, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(12) })
 
         status = TextView(this).apply { textSize = 13f; setTextColor(ink); setPadding(dp(16), dp(13), dp(16), dp(13)); background = rounded(Color.WHITE, mint, 1, 22); elevation = dp(2).toFloat() }
@@ -56,7 +56,7 @@ class MainActivity : Activity() {
         root.addView(actions)
 
         section(root, "✧  桌宠外观与位置", blue)
-        addSlider(root, "桌宠大小", 120, 320, prefs.getInt("size", 220), " px", blue) { save("size", it); updatePet() }
+        addSlider(root, "桌宠大小", 120, 500, prefs.getInt("size", 220).coerceAtMost(500), " px", blue) { save("size", it); updatePet() }
         addSwitch(root, "位置调整模式", "开启后拖动桌宠移动位置；关闭后触摸用于互动", prefs.getBoolean("moveMode", false), mint) { save("moveMode", it); updatePet() }
         addSwitch(root, "锁定当前大小", "避免误操作调整尺寸", prefs.getBoolean("sizeLocked", false), pink) { save("sizeLocked", it); updatePet() }
 
@@ -86,7 +86,7 @@ class MainActivity : Activity() {
         // Translucent white surfaces over a soft gray background create a restrained glass-card effect.
         setColor(Color.argb(218, 255, 255, 255))
         cornerRadius = dp(radius).toFloat()
-        setStroke(dp(strokeDp.coerceAtMost(1)), Color.argb(190, 185, 188, 193))
+        setStroke(dp(strokeDp.coerceAtMost(1)), Color.argb(210, 35, 37, 40))
     }
     private fun button(label: String, color: Int, action: () -> Unit) = Button(this).apply {
         text = label
