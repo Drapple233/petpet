@@ -73,12 +73,13 @@ class PetOverlayService : Service() {
     private var pressStartedAt = 0L
     private var lastKeyPulse = 0L
 
+    // 贺岘：张扬、嘴硬、脾气冲，关心也不肯好好承认。
     private val lines = mapOf(
-        "tap" to listOf("欸？叫我吗！", "看见你啦。", "怎么啦怎么啦？", "戳我做什么呀。", "我在这里哦。", "哼，才不是在等你。", "再点一下试试？", "今天也要陪着我哦。"),
-        "pat" to listOf("摸头可以，别弄乱啦。", "……再摸一会儿。", "被你摸得有点舒服。", "嗯？是在哄我吗？", "头发要被你揉翘了！", "今天的摸头额度还没用完。", "只准摸一小会儿哦。", "好啦好啦，知道你喜欢我。"),
-        "music" to listOf("来啦！放点好听的。", "这首歌不错嘛。", "音乐时间，启动！", "让我跟着节奏动一动。", "耳朵已经准备好啦。", "这段我喜欢。", "再大声一点点……开玩笑的。", "听歌的时候也别忘了我。"),
-        "typing" to listOf("认真打字的样子不错嘛。", "键盘哒哒，我也动动。", "是在写给我的吗？", "别打错字啦。", "我陪你一起忙。", "手速好快！", "休息一下眼睛嘛。", "我有在旁边加油哦。"),
-        "beat" to listOf("咚、咚！跟上啦。", "这个节拍正合适。", "我也踩到拍子啦！", "跟着音乐点点头。", "节奏感还不错吧？", "再来一拍！")
+        "tap" to listOf("干什么？又来戳我。", "看够了没有？", "……想我了就直说。", "哼，今天准你多看一会儿。", "手拿开，头发都乱了。", "怎么，没我陪着不习惯？", "有事就说，别拿手指招惹我。", "喂，别戳上瘾了啊。", "盯着我看什么，脸上有字？", "行了，知道你看见我了。"),
+        "pat" to listOf("喂！谁准你揉我头发了？", "轻点，真当我是兔子啊。", "……再摸一下就一下。", "弄乱了你给我理？", "别笑，老子没舒服到那种程度。", "手法还行，勉强及格。", "不许到处摸，听见没有？", "啧，算了……这次不跟你计较。", "再揉我真要生气了。大概。", "你倒是挺会挑时候的。"),
+        "music" to listOf("总算放点像样的了。", "这首还行，别得意。", "音量够了，我耳朵好着呢。", "听着呢，没聋。", "这段不错……我可没夸你。", "放你的歌，我陪着就是了。", "节奏挺带劲，算你会挑。", "别光顾着听歌，偶尔也看看我。", "嗯，这首留下。", "谁说我在跟着节拍动？"),
+        "typing" to listOf("打字认真点，别又敲错。", "手速挺快啊，显摆呢？", "忙你的，我又没催你。", "写什么呢？不方便说就算了。", "肩膀放松，别绷得跟块木头似的。", "卡住了？想不出来就歇会儿。", "我在这儿，没催你交差。", "敲慢点也没人扣你钱。", "别老盯着屏幕，眼睛不要了？", "行了，继续吧，我陪着。"),
+        "beat" to listOf("这拍子还算利索。", "跟上了，别小看我。", "节奏不错，勉强合我胃口。", "听见了，不用提醒第二遍。", "这一下踩得漂亮吧？", "别光顾着点头，脖子不累？", "再来，刚才那下不算。", "哼，配合得还不错。")
     )
 
     private val settingsReceiver = object : BroadcastReceiver() {
@@ -376,7 +377,21 @@ class PetOverlayService : Service() {
 
     private fun spawnEffect(symbol: String, horizontalPosition: Float) {
         val frame = container ?: return
-        val size = dp(if (symbol.length > 1) 25 else 29)
+        // Scale effects with the pet so sparkles/hearts remain visible at the smallest pet size.
+        val petScale = (prefs.getInt("size", 220) / 220f).coerceIn(.45f, 1.0f)
+        val frameWidth = frame.width.takeIf { it > 0 } ?: params.width
+        val frameHeight = frame.height.takeIf { it > 0 } ?: params.height
+        val safeWidth = frameWidth.coerceAtLeast(dp(48))
+        val safeHeight = frameHeight.coerceAtLeast(dp(64))
+        val desiredSize = (dp(if (symbol.length > 1) 25 else 29) * petScale).toInt()
+        val maxSize = (minOf(safeWidth, safeHeight) * .22f).toInt().coerceAtLeast(dp(10))
+        val size = desiredSize.coerceIn(dp(10).coerceAtMost(maxSize), maxSize)
+        val margin = dp(2).coerceAtMost((safeWidth - size).coerceAtLeast(0) / 2)
+        val maxX = (safeWidth - size - margin).coerceAtLeast(margin)
+        val x = (safeWidth * horizontalPosition).toInt().coerceIn(margin, maxX)
+        val minY = dp(4).coerceAtMost((safeHeight - size).coerceAtLeast(0))
+        val maxY = (safeHeight - size - dp(4)).coerceAtLeast(minY)
+        val y = (safeHeight * Random.nextDouble(.30, .62)).toInt().coerceIn(minY, maxY)
         val effect = ImageView(this).apply {
             setImageResource(when (symbol) {
                 "♡", "♥" -> R.drawable.pet_effect_heart
@@ -387,12 +402,8 @@ class PetOverlayService : Service() {
             scaleType = ImageView.ScaleType.FIT_CENTER
             alpha = 0f
         }
-        val safeWidth = frame.width.coerceAtLeast(dp(120))
-        val safeHeight = frame.height.coerceAtLeast(dp(180))
-        val x = (safeWidth * horizontalPosition).toInt().coerceIn(dp(4), (safeWidth - size - dp(4)).coerceAtLeast(dp(4)))
-        val y = (safeHeight * Random.nextDouble(.34, .68)).toInt().coerceIn(dp(55), (safeHeight - size - dp(12)).coerceAtLeast(dp(60)))
         frame.addView(effect, FrameLayout.LayoutParams(size, size).apply { leftMargin = x; topMargin = y })
-        effect.animate().alpha(1f).translationY(-dp(38).toFloat()).scaleX(1.18f).scaleY(1.18f).setDuration(180).withEndAction {
+        effect.animate().alpha(1f).translationY(-minOf(dp(38), (safeHeight * .12f).toInt()).toFloat()).scaleX(1.12f).scaleY(1.12f).setDuration(180).withEndAction {
             effect.animate().alpha(0f).setDuration(360).withEndAction { frame.removeView(effect) }.start()
         }.start()
     }
