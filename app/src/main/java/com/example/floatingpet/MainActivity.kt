@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
+import android.content.res.ColorStateList
 import android.media.projection.MediaProjectionManager
 import android.net.Uri
 import android.os.Build
@@ -16,37 +17,38 @@ import android.graphics.drawable.GradientDrawable
 class MainActivity : Activity() {
     private val prefs by lazy { getSharedPreferences("pet_settings", MODE_PRIVATE) }
     private lateinit var status: TextView
-    private val ink = Color.rgb(78, 91, 98)
-    private val mint = Color.rgb(155, 221, 205)
-    private val blue = Color.rgb(147, 207, 241)
-    private val pink = Color.rgb(255, 190, 202)
-    private val butter = Color.rgb(255, 224, 151)
-    private val cream = Color.rgb(255, 251, 238)
+    private val ink = Color.rgb(42, 45, 49)
+    private val mint = Color.rgb(190, 194, 198)
+    private val blue = Color.rgb(175, 180, 185)
+    private val pink = Color.rgb(205, 208, 212)
+    private val butter = Color.rgb(220, 222, 225)
+    private val cream = Color.rgb(245, 246, 247)
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        window.statusBarColor = Color.WHITE
-        window.navigationBarColor = Color.WHITE
-        window.decorView.systemUiVisibility = 0
+        window.statusBarColor = Color.rgb(239, 240, 242)
+        window.navigationBarColor = Color.rgb(239, 240, 242)
+        window.decorView.systemUiVisibility = android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or android.view.View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(16), dp(14), dp(16), dp(24))
-            background = GradientDrawable(GradientDrawable.Orientation.TL_BR, intArrayOf(Color.WHITE, Color.rgb(255, 253, 250), Color.rgb(248, 253, 252)))
+            setPadding(dp(16), dp(18), dp(16), dp(28))
+            background = GradientDrawable(GradientDrawable.Orientation.TL_BR, intArrayOf(Color.rgb(242, 243, 245), Color.rgb(229, 231, 234), Color.rgb(247, 247, 248)))
         }
         val scroll = ScrollView(this).apply { clipToPadding = false; addView(root) }
         val hero = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(20), dp(22), dp(20), dp(20))
-            background = rounded(Color.WHITE, pink, 2, 26)
+            setPadding(dp(20), dp(24), dp(20), dp(22))
+            background = rounded(Color.WHITE, pink, 1, 28)
+            elevation = dp(5).toFloat()
         }
-        hero.addView(TextView(this).apply { text = "✿  FloatingPet  ✿"; textSize = 27f; setTextColor(Color.rgb(93, 151, 169)); typeface = Typeface.create("sans-serif-rounded", Typeface.BOLD) })
+        hero.addView(TextView(this).apply { text = "FloatingPet"; textSize = 29f; setTextColor(Color.rgb(38, 40, 43)); typeface = Typeface.create("sans-serif", Typeface.NORMAL); letterSpacing = 0.015f })
         hero.addView(TextView(this).apply { text = "小小的陪伴，也要软乎乎的。  ♡"; textSize = 14f; setTextColor(ink); setPadding(0, dp(7), 0, 0) })
-        hero.addView(TextView(this).apply { text = "☁  呼吸 · 摸头蓄力 · 节拍点头 · 漂浮星星  ☁"; textSize = 12f; setTextColor(Color.rgb(126, 171, 177)); setPadding(0, dp(12), 0, 0) })
+        hero.addView(TextView(this).apply { text = "呼吸 · 摸头蓄力 · 节拍点头 · 漂浮星星"; textSize = 12f; setTextColor(Color.rgb(125, 129, 134)); setPadding(0, dp(12), 0, 0) })
         root.addView(hero, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(12) })
 
-        status = TextView(this).apply { textSize = 13f; setTextColor(ink); setPadding(dp(14), dp(12), dp(14), dp(12)); background = rounded(Color.WHITE, mint, 2, 18) }
+        status = TextView(this).apply { textSize = 13f; setTextColor(ink); setPadding(dp(16), dp(13), dp(16), dp(13)); background = rounded(Color.WHITE, mint, 1, 22); elevation = dp(2).toFloat() }
         root.addView(status, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(10) })
         val actions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER; weightSum = 2f }
         actions.addView(button("开始陪伴  ♡", mint) { startPet() }, LinearLayout.LayoutParams(0, dp(48), 1f).apply { marginEnd = dp(5) })
@@ -73,33 +75,79 @@ class MainActivity : Activity() {
         section(root, "✿  温柔的小提示", butter)
         root.addView(TextView(this).apply {
             text = "系统音频捕获需要 Android 的系统确认框，且音乐 App 必须允许被捕获；若捕获不到声音，可改用麦克风模式。麦克风模式只在本机分析音量变化，不保存录音。逐键反馈受输入法和系统版本限制。"
-            textSize = 12.5f; setTextColor(ink); setPadding(dp(16), dp(14), dp(16), dp(14)); background = rounded(Color.rgb(255,255,249), butter, 2, 18)
+            textSize = 12.5f; setTextColor(ink); setPadding(dp(16), dp(16), dp(16), dp(16)); background = rounded(Color.WHITE, butter, 1, 22); elevation = dp(2).toFloat()
         })
-        root.addView(TextView(this).apply { text = "✦  made with little stars, clouds and love  ✦"; gravity = Gravity.CENTER; textSize = 12f; setTextColor(Color.rgb(128, 174, 185)); setPadding(0, dp(18), 0, dp(4)) })
+        root.addView(TextView(this).apply { text = "made with little stars, clouds and love"; gravity = Gravity.CENTER; textSize = 11.5f; setTextColor(Color.rgb(135, 138, 143)); setPadding(0, dp(18), 0, dp(4)) })
         setContentView(scroll)
         refreshStatus()
     }
 
     private fun rounded(fill: Int, stroke: Int, strokeDp: Int, radius: Int) = GradientDrawable().apply {
-        setColor(fill); cornerRadius = dp(radius).toFloat(); setStroke(dp(strokeDp), stroke)
+        // Translucent white surfaces over a soft gray background create a restrained glass-card effect.
+        setColor(Color.argb(218, 255, 255, 255))
+        cornerRadius = dp(radius).toFloat()
+        setStroke(dp(strokeDp.coerceAtMost(1)), Color.argb(190, 185, 188, 193))
     }
     private fun button(label: String, color: Int, action: () -> Unit) = Button(this).apply {
-        text = label; isAllCaps = false; textSize = 13.5f; setTextColor(ink); typeface = Typeface.create("sans-serif-rounded", Typeface.BOLD)
-        background = rounded(Color.WHITE, color, 2, 18); setPadding(dp(8), 0, dp(8), 0); setOnClickListener { action() }
+        text = label
+        isAllCaps = false
+        textSize = 13.5f
+        setTextColor(ink)
+        typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+        background = rounded(Color.WHITE, color, 1, 22)
+        elevation = dp(2).toFloat()
+        setPadding(dp(8), 0, dp(8), 0)
+        setOnClickListener { action() }
     }
-    private fun fullWidth() = LinearLayout.LayoutParams(-1, dp(46)).apply { topMargin = dp(5) }
+    private fun fullWidth() = LinearLayout.LayoutParams(-1, dp(48)).apply { topMargin = dp(7) }
     private fun section(root: LinearLayout, title: String, color: Int) {
-        root.addView(TextView(this).apply { text = title; textSize = 18f; typeface = Typeface.create("sans-serif-rounded", Typeface.BOLD); setTextColor(Color.rgb(89, 139, 154)); setPadding(dp(5), dp(18), 0, dp(8)) })
-        root.addView(LinearLayout(this).apply { background = rounded(Color.WHITE, color, 2, 4) }, LinearLayout.LayoutParams(dp(66), dp(4)).apply { bottomMargin = dp(8); marginStart = dp(5) })
+        root.addView(TextView(this).apply {
+            text = title.replace("✧", "◇").replace("✿", "○")
+            textSize = 18f
+            typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+            setTextColor(Color.rgb(48, 51, 55))
+            setPadding(dp(4), dp(23), 0, dp(10))
+            letterSpacing = 0.01f
+        })
+        root.addView(LinearLayout(this).apply {
+            background = GradientDrawable().apply {
+                setColor(Color.rgb(105, 109, 114))
+                cornerRadius = dp(2).toFloat()
+            }
+        }, LinearLayout.LayoutParams(dp(34), dp(2)).apply { bottomMargin = dp(12); marginStart = dp(4) })
     }
     private fun addSwitch(root: LinearLayout, title: String, subtitle: String, checked: Boolean, accent: Int, changed: (Boolean) -> Unit) {
-        val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(14), dp(9), dp(12), dp(9)); background = rounded(Color.WHITE, accent, 1, 18) }
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(16), dp(12), dp(14), dp(12))
+            background = rounded(Color.WHITE, accent, 1, 22)
+            elevation = dp(2).toFloat()
+        }
         val line = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
-        line.addView(TextView(this).apply { text = title; textSize = 15f; setTextColor(ink); typeface = Typeface.create("sans-serif-rounded", Typeface.BOLD) }, LinearLayout.LayoutParams(0, -2, 1f))
-        line.addView(Switch(this).apply { isChecked = checked; setOnCheckedChangeListener { _, v -> changed(v) } })
+        line.addView(TextView(this).apply {
+            text = title
+            textSize = 15f
+            setTextColor(ink)
+            typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+        }, LinearLayout.LayoutParams(0, -2, 1f))
+        line.addView(Switch(this).apply {
+            isChecked = checked
+            thumbTintList = ColorStateList.valueOf(if (checked) Color.rgb(65, 68, 73) else Color.rgb(238, 239, 241))
+            trackTintList = ColorStateList.valueOf(if (checked) Color.rgb(175, 178, 183) else Color.rgb(205, 208, 212))
+            setOnCheckedChangeListener { _, v ->
+                thumbTintList = ColorStateList.valueOf(if (v) Color.rgb(65, 68, 73) else Color.rgb(238, 239, 241))
+                trackTintList = ColorStateList.valueOf(if (v) Color.rgb(175, 178, 183) else Color.rgb(205, 208, 212))
+                changed(v)
+            }
+        })
         box.addView(line)
-        box.addView(TextView(this).apply { text = subtitle; textSize = 11.5f; setTextColor(Color.rgb(135, 148, 148)); setPadding(0, dp(2), 0, 0) })
-        root.addView(box, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(7) })
+        box.addView(TextView(this).apply {
+            text = subtitle
+            textSize = 11.5f
+            setTextColor(Color.rgb(125, 129, 134))
+            setPadding(0, dp(4), 0, 0)
+        })
+        root.addView(box, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(9) })
     }
     private fun addHalfDpSlider(root: LinearLayout, title: String, initialHalfDp: Int, accent: Int, changed: (Int) -> Unit) {
         val minHalfDp = when {
