@@ -22,6 +22,22 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+      - name: Prepare FloatingPet signing key (optional)
+        env:
+          FLOATINGPET_KEYSTORE_BASE64: ${{ secrets.FLOATINGPET_KEYSTORE_BASE64 }}
+          FLOATINGPET_KEYSTORE_PASSWORD: ${{ secrets.FLOATINGPET_KEYSTORE_PASSWORD }}
+          FLOATINGPET_KEY_ALIAS: ${{ secrets.FLOATINGPET_KEY_ALIAS }}
+          FLOATINGPET_KEY_PASSWORD: ${{ secrets.FLOATINGPET_KEY_PASSWORD }}
+        run: |
+          if [ -n "$FLOATINGPET_KEYSTORE_BASE64" ]; then
+            echo "$FLOATINGPET_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/floatingpet-signing.jks"
+            echo "FLOATINGPET_KEYSTORE_PATH=$RUNNER_TEMP/floatingpet-signing.jks" >> "$GITHUB_ENV"
+            echo "FLOATINGPET_KEYSTORE_PASSWORD=$FLOATINGPET_KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+            echo "FLOATINGPET_KEY_ALIAS=$FLOATINGPET_KEY_ALIAS" >> "$GITHUB_ENV"
+            echo "FLOATINGPET_KEY_PASSWORD=$FLOATINGPET_KEY_PASSWORD" >> "$GITHUB_ENV"
+          else
+            echo "No dedicated FloatingPet signing key configured; using temporary CI debug signing."
+          fi
       - name: Build debug APK
         run: gradle --no-daemon assembleDebug
       - name: Rename APK
