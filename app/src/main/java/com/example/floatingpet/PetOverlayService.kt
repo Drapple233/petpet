@@ -75,10 +75,10 @@ class PetOverlayService : Service() {
 
     // 贺岘：张扬、嘴硬、脾气冲，关心也不肯好好承认。
     private val lines = mapOf(
-        "tap" to listOf("干什么？又来戳我。", "看够了没有？", "……想我了就直说。", "哼，今天准你多看一会儿。", "手拿开，头发都乱了。", "怎么，没我陪着不习惯？", "有事就说，别拿手指招惹我。", "喂，别戳上瘾了啊。", "盯着我看什么，脸上有字？", "行了，知道你看见我了。"),
-        "pat" to listOf("喂！谁准你揉我头发了？", "轻点，真当我是兔子啊。", "……再摸一下就一下。", "弄乱了你给我理？", "别笑，老子没舒服到那种程度。", "手法还行，勉强及格。", "不许到处摸，听见没有？", "啧，算了……这次不跟你计较。", "再揉我真要生气了。大概。", "你倒是挺会挑时候的。"),
+        "tap" to listOf("干什么？又来戳我。", "看够了没有？", "……想我了就直说。", "哼，今天准你多看一会儿。", "手拿开，头发都乱了。", "怎么，没我陪着不习惯？", "有事就说，别戳我。", "喂，别戳上瘾了啊。", "盯着我看什么，脸上有字？", "行了，知道你看见我了。"),
+        "pat" to listOf("喂！谁准你揉我头发了？", "轻点，真当我是兔子啊。", "……再摸一下就一下。", "弄乱了你给我理？", "别笑，我才没觉得舒服。", "手法还行，勉强及格。", "不许到处摸，听见没有？", "啧，算了……这次不跟你计较。", "再揉我真要生气了。大概。", "你倒是挺会挑时候的。"),
         "music" to listOf("总算放点像样的了。", "这首还行，别得意。", "音量够了，我耳朵好着呢。", "听着呢，没聋。", "这段不错……我可没夸你。", "放你的歌，我陪着就是了。", "节奏挺带劲，算你会挑。", "别光顾着听歌，偶尔也看看我。", "嗯，这首留下。", "谁说我在跟着节拍动？"),
-        "typing" to listOf("打字认真点，别又敲错。", "手速挺快啊，显摆呢？", "忙你的，我又没催你。", "写什么呢？不方便说就算了。", "肩膀放松，别绷得跟块木头似的。", "卡住了？想不出来就歇会儿。", "我在这儿，没催你交差。", "敲慢点也没人扣你钱。", "别老盯着屏幕，眼睛不要了？", "行了，继续吧，我陪着。"),
+        "typing" to listOf("打字认真点，别又敲错。", "手速挺快啊，显摆呢？", "忙你的，我又没催你。", "写什么呢？不方便说就算了。", "肩膀放松，别绷着。", "卡住了？歇会儿再想。", "我在这儿，没催你。", "敲慢点也没人扣你钱。", "别老盯着屏幕，眼睛不要了？", "行了，继续吧，我陪着。"),
         "beat" to listOf("这拍子还算利索。", "跟上了，别小看我。", "节奏不错，勉强合我胃口。", "听见了，不用提醒第二遍。", "这一下踩得漂亮吧？", "别光顾着点头，脖子不累？", "再来，刚才那下不算。", "哼，配合得还不错。")
     )
 
@@ -151,7 +151,7 @@ class PetOverlayService : Service() {
         wm = getSystemService(WINDOW_SERVICE) as WindowManager
         val size = prefs.getInt("size", 220)
         val type = if (Build.VERSION.SDK_INT >= 26) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY else WindowManager.LayoutParams.TYPE_PHONE
-        params = WindowManager.LayoutParams((size * 1.30f).toInt(), (size * 1.62f).toInt(), type, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN, PixelFormat.TRANSLUCENT).apply { gravity = Gravity.TOP or Gravity.START; x = 40; y = 100 }
+        params = WindowManager.LayoutParams((size * 1.30f).toInt(), (size * 1.96f).toInt(), type, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN, PixelFormat.TRANSLUCENT).apply { gravity = Gravity.TOP or Gravity.START; x = 40; y = 100 }
         val frame = FrameLayout(this)
         body = ImageView(this).apply {
             setImageDrawable(android.graphics.drawable.Drawable.createFromStream(assets.open("mascot_body.png"), null))
@@ -162,16 +162,23 @@ class PetOverlayService : Service() {
             scaleType = ImageView.ScaleType.FIT_CENTER
         }
         speech = TextView(this).apply {
-            textSize = 12f; setTextColor(Color.WHITE); gravity = Gravity.CENTER
-            setPadding(dp(12), dp(8), dp(12), dp(8))
-            setTextColor(Color.rgb(92, 83, 66))
-            background = GradientDrawable().apply { setColor(Color.WHITE); cornerRadius = dp(20).toFloat(); setStroke(dp(2), Color.rgb(255, 190, 202)) }
+            textSize = 11f
+            setTextColor(Color.rgb(242, 242, 242))
+            gravity = Gravity.CENTER
+            includeFontPadding = false
+            setPadding(dp(10), dp(7), dp(10), dp(7))
+            background = GradientDrawable().apply {
+                setColor(Color.argb(238, 30, 30, 30))
+                cornerRadius = dp(12).toFloat()
+                setStroke(dp(1), Color.rgb(105, 105, 105))
+            }
             visibility = android.view.View.GONE
-            maxLines = 2
+            maxLines = 3
         }
-        frame.addView(body, FrameLayout.LayoutParams(size, size, Gravity.CENTER_HORIZONTAL or Gravity.TOP).apply { topMargin = (size * .52f).toInt() })
-        frame.addView(head, FrameLayout.LayoutParams((size * .82f).toInt(), (size * .7f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = (size * .25f).toInt() })
-        frame.addView(speech, FrameLayout.LayoutParams((size * 1.22f).toInt().coerceAtMost((size * 1.28f).toInt()), -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(2) })
+        // Reserve a compact strip above the pet for dialogue so the bubble never covers the face.
+        frame.addView(body, FrameLayout.LayoutParams(size, size, Gravity.CENTER_HORIZONTAL or Gravity.TOP).apply { topMargin = (size * .82f).toInt() })
+        frame.addView(head, FrameLayout.LayoutParams((size * .82f).toInt(), (size * .7f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = (size * .55f).toInt() })
+        frame.addView(speech, FrameLayout.LayoutParams((size * 1.22f).toInt(), -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(3) })
         frame.setOnTouchListener { _, e ->
             when (e.action) {
                 MotionEvent.ACTION_DOWN -> {
@@ -257,15 +264,15 @@ class PetOverlayService : Service() {
         val frame = container ?: return
         val size = prefs.getInt("size", 220)
         moveMode = prefs.getBoolean("moveMode", false)
-        if (params.width != (size * 1.30f).toInt() || params.height != (size * 1.62f).toInt()) {
-            params.width = (size * 1.30f).toInt(); params.height = (size * 1.62f).toInt()
+        if (params.width != (size * 1.30f).toInt() || params.height != (size * 1.96f).toInt()) {
+            params.width = (size * 1.30f).toInt(); params.height = (size * 1.96f).toInt()
             try { wm.updateViewLayout(frame, params) } catch (_: Exception) {}
         }
         if (prefs.contains("petX")) params.x = prefs.getInt("petX", params.x)
         if (prefs.contains("petY")) params.y = prefs.getInt("petY", params.y)
-        body?.layoutParams = FrameLayout.LayoutParams(size, size, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = (size * .52f).toInt() }
-        head?.layoutParams = FrameLayout.LayoutParams((size * .82f).toInt(), (size * .7f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = (size * .25f).toInt() }
-        speech?.layoutParams = FrameLayout.LayoutParams((size * 1.22f).toInt(), -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(2) }
+        body?.layoutParams = FrameLayout.LayoutParams(size, size, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = (size * .82f).toInt() }
+        head?.layoutParams = FrameLayout.LayoutParams((size * .82f).toInt(), (size * .7f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = (size * .55f).toInt() }
+        speech?.layoutParams = FrameLayout.LayoutParams((size * 1.22f).toInt(), -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(3) }
         body?.requestLayout(); head?.requestLayout()
         try { wm.updateViewLayout(frame, params) } catch (_: Exception) {}
         bodyBreathAnimator?.cancel(); headBreathAnimator?.cancel(); idleAnimator?.cancel()
