@@ -170,7 +170,7 @@ class PetOverlayService : Service() {
             background = GradientDrawable().apply {
                 setColor(Color.WHITE)
                 cornerRadius = dp(20).toFloat()
-                setStroke(dp(2), Color.rgb(255, 190, 202))
+                setStroke(dp(2), Color.BLACK)
             }
             visibility = android.view.View.GONE
             maxLines = 2
