@@ -195,13 +195,13 @@ class PetOverlayService : Service() {
                             try { wm.updateViewLayout(frame, params) } catch (_: Exception) {}
                         } else {
                             // Restore the original head-follow gesture and use asymmetric,
-                            // subtle torso compensation only: more on downward petting, very little upward.
+                            // subtle asymmetric torso compensation: less on downward petting, more on upward petting.
                             val headX = (dx * .02f).coerceIn(-dp(3).toFloat(), dp(3).toFloat())
                             val headY = (dy * .015f).coerceIn(-dp(2).toFloat(), dp(2).toFloat())
                             head?.rotation = (dx / 18f).coerceIn(-7f, 7f)
                             head?.translationX = headX
                             head?.translationY = headY
-                            body?.translationY = if (headY > 0f) headY * .35f else headY * .06f
+                            body?.translationY = if (headY > 0f) headY * .06f else headY * .35f
                         }
                     }
                     true
