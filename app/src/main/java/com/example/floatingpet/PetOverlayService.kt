@@ -178,7 +178,7 @@ class PetOverlayService : Service() {
         // Reserve a compact strip above the pet for dialogue so the bubble never covers the face.
         frame.addView(body, FrameLayout.LayoutParams(size, size, Gravity.CENTER_HORIZONTAL or Gravity.TOP).apply { topMargin = (size * .52f).toInt() })
         frame.addView(head, FrameLayout.LayoutParams((size * .82f).toInt(), (size * .7f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = (size * .25f).toInt() })
-        frame.addView(speech, FrameLayout.LayoutParams((size * 1.30f).toInt(), -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = -dp(6) })
+        frame.addView(speech, FrameLayout.LayoutParams((size * 1.30f).toInt(), -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(2) })
         frame.setOnTouchListener { _, e ->
             when (e.action) {
                 MotionEvent.ACTION_DOWN -> {
