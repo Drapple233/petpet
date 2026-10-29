@@ -181,7 +181,7 @@ class PetOverlayService : Service() {
         // The base layer is the complete figure; the only separate art layer is the foreground head.
         // Dialogue occupies a compact strip above the pet.
         frame.addView(body, FrameLayout.LayoutParams((size * 1.18f).toInt(), (size * 1.52f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(2) })
-        frame.addView(head, FrameLayout.LayoutParams((size * .82f).toInt(), (size * .7f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = (size * .25f).toInt() })
+        frame.addView(head, FrameLayout.LayoutParams((size * .66f).toInt(), (size * .66f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = (size * .33f).toInt() })
         frame.addView(speech, FrameLayout.LayoutParams((size * 1.22f).toInt().coerceAtMost((size * 1.28f).toInt()), -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = -dp(6) })
         frame.setOnTouchListener { _, e ->
             when (e.action) {
@@ -275,7 +275,7 @@ class PetOverlayService : Service() {
         if (prefs.contains("petX")) params.x = prefs.getInt("petX", params.x)
         if (prefs.contains("petY")) params.y = prefs.getInt("petY", params.y)
         body?.layoutParams = FrameLayout.LayoutParams((size * 1.18f).toInt(), (size * 1.52f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(2) }
-        head?.layoutParams = FrameLayout.LayoutParams((size * .82f).toInt(), (size * .7f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = (size * .25f).toInt() }
+        head?.layoutParams = FrameLayout.LayoutParams((size * .66f).toInt(), (size * .66f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = (size * .33f).toInt() }
         speech?.layoutParams = FrameLayout.LayoutParams((size * 1.22f).toInt(), -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = -dp(6) }
         body?.requestLayout(); head?.requestLayout()
         try { wm.updateViewLayout(frame, params) } catch (_: Exception) {}
