@@ -1,8 +1,8 @@
-name: Build PetPet APK
+name: Build floatingpet APK
 on:
   workflow_dispatch:
   push:
-    branches: [ main, 'feature/pastel-natural-pet-20261028', 'release/he-xian-final' ]
+    branches: [ main, 'feature/pastel-natural-pet-20261028', 'release/he-xian-final', 'Fox' ]
   pull_request:
     branches: [ main ]
 permissions:
@@ -25,10 +25,10 @@ jobs:
       - name: Build debug APK
         run: gradle --no-daemon assembleDebug
       - name: Rename APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/PetPet.apk
+        run: cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/floatingpet.apk
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PetPet
+          name: floatingpet
           path: app/build/outputs/apk/debug/PetPet.apk
           if-no-files-found: error
