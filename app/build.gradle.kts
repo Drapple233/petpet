@@ -8,7 +8,7 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.floatingpet"
+        applicationId = "com.drapple233.floatingpet"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
