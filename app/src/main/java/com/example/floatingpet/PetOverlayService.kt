@@ -31,16 +31,16 @@ class PetOverlayService : Service() {
     private val prefs by lazy { getSharedPreferences("pet_settings", MODE_PRIVATE) }
 
     // Fixed animation tuning values (intentionally not exposed in the app UI).
-    private val bodyBreathAmplitudeDp = 1.0f
+    private val bodyBreathAmplitudeDp = 0.4f
     private val bodyBreathSpeed = 13
-    private val headBreathAmplitudeDp = 1.0f
+    private val headBreathAmplitudeDp = 0.4f
     private val headBreathSpeed = 17
-    private val clickHeadJumpDp = 7.0f
-    private val clickBodyJumpDp = 6.0f
-    private val holdExtraHeadDownDp = 1.0f
-    private val holdHeadReboundDp = 9.5f
-    private val holdBodyReboundDp = 8.0f
-    private val patHeadDownDp = 6.0f
+    private val clickHeadJumpDp = 3.0f
+    private val clickBodyJumpDp = 2.5f
+    private val holdExtraHeadDownDp = 0.4f
+    private val holdHeadReboundDp = 3.0f
+    private val holdBodyReboundDp = 2.5f
+    private val patHeadDownDp = 2.5f
     private lateinit var wm: WindowManager
     private var container: FrameLayout? = null
     private var head: ImageView? = null
@@ -176,13 +176,13 @@ class PetOverlayService : Service() {
                 setStroke(dp(2), Color.BLACK)
             }
             visibility = android.view.View.GONE
-            maxLines = 2
+            maxLines = 3
         }
         // The base layer is the complete figure; the only separate art layer is the foreground head.
         // Dialogue occupies a compact strip above the pet.
         frame.addView(body, FrameLayout.LayoutParams((size * 1.18f).toInt(), (size * 1.52f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(2) })
-        frame.addView(head, FrameLayout.LayoutParams((size * .66f).toInt(), (size * .66f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = (size * .33f).toInt() })
-        frame.addView(speech, FrameLayout.LayoutParams((size * 1.22f).toInt().coerceAtMost((size * 1.28f).toInt()), -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = -dp(6) })
+        frame.addView(head, FrameLayout.LayoutParams((size * .66f).toInt(), (size * .66f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = (size * .30f).toInt() })
+        frame.addView(speech, FrameLayout.LayoutParams((size * 1.26f).toInt().coerceAtMost((size * 1.28f).toInt()), -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(4) })
         frame.setOnTouchListener { _, e ->
             when (e.action) {
                 MotionEvent.ACTION_DOWN -> {
@@ -275,8 +275,8 @@ class PetOverlayService : Service() {
         if (prefs.contains("petX")) params.x = prefs.getInt("petX", params.x)
         if (prefs.contains("petY")) params.y = prefs.getInt("petY", params.y)
         body?.layoutParams = FrameLayout.LayoutParams((size * 1.18f).toInt(), (size * 1.52f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(2) }
-        head?.layoutParams = FrameLayout.LayoutParams((size * .66f).toInt(), (size * .66f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = (size * .33f).toInt() }
-        speech?.layoutParams = FrameLayout.LayoutParams((size * 1.22f).toInt(), -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = -dp(6) }
+        head?.layoutParams = FrameLayout.LayoutParams((size * .66f).toInt(), (size * .66f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = (size * .30f).toInt() }
+        speech?.layoutParams = FrameLayout.LayoutParams((size * 1.26f).toInt(), -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(4) }
         body?.requestLayout(); head?.requestLayout()
         try { wm.updateViewLayout(frame, params) } catch (_: Exception) {}
         bodyBreathAnimator?.cancel(); headBreathAnimator?.cancel(); idleAnimator?.cancel()
@@ -292,8 +292,8 @@ class PetOverlayService : Service() {
                 val t = a.animatedValue as Float
                 if (!interactionAnimating && !longPressing && !moved) {
                     body?.translationY = -(breath * resources.displayMetrics.density * t)
-                    body?.scaleY = 1f + .003f * t
-                    body?.scaleX = 1f + .002f * t
+                    body?.scaleY = 1f + .001f * t
+                    body?.scaleX = 1f + .001f * t
                 }
             }
             start()
@@ -306,7 +306,7 @@ class PetOverlayService : Service() {
                 val t = a.animatedValue as Float
                 if (!interactionAnimating && !longPressing && !moved) {
                     head?.translationY = -(headBreath * resources.displayMetrics.density * t)
-                    head?.scaleY = 1f + .003f * t
+                    head?.scaleY = 1f + .001f * t
                 }
             }
             start()
@@ -360,13 +360,13 @@ class PetOverlayService : Service() {
 
     private fun beatPulse(realBeat: Boolean = false) {
         head?.animate()?.cancel()
-        val drop = if (realBeat) dp(2.0f).toFloat() else dp(1.0f).toFloat()
-        head?.animate()?.translationY(drop)?.rotation(2.2f)?.setDuration(85)?.withEndAction {
-            head?.animate()?.translationY(-dp(1.0f).toFloat())?.rotation(-1.4f)?.setDuration(95)?.withEndAction {
+        val drop = if (realBeat) dp(1.0f).toFloat() else dp(0.5f).toFloat()
+        head?.animate()?.translationY(drop)?.rotation(0.8f)?.setDuration(85)?.withEndAction {
+            head?.animate()?.translationY(-dp(1.0f).toFloat())?.rotation(-0.5f)?.setDuration(95)?.withEndAction {
                 head?.animate()?.translationY(0f)?.rotation(0f)?.setDuration(110)?.start()
             }?.start()
         }?.start()
-        body?.animate()?.scaleX(1.003f)?.scaleY(1.004f)?.setDuration(120)?.withEndAction {
+        body?.animate()?.scaleX(1.001f)?.scaleY(1.001f)?.setDuration(120)?.withEndAction {
             body?.animate()?.scaleX(1f)?.scaleY(1f)?.setDuration(180)?.start()
         }?.start()
         val now = System.currentTimeMillis()
@@ -421,10 +421,10 @@ class PetOverlayService : Service() {
 
     private fun typingPulse() {
         head?.animate()?.cancel()
-        head?.animate()?.translationY(dp(2).toFloat())?.rotation(.4f)?.setDuration(70)?.withEndAction {
+        head?.animate()?.translationY(dp(1).toFloat())?.rotation(.2f)?.setDuration(70)?.withEndAction {
             head?.animate()?.translationY(0f)?.rotation(0f)?.setDuration(130)?.start()
         }?.start()
-        body?.animate()?.translationY(-dp(1).toFloat())?.setDuration(90)?.withEndAction {
+        body?.animate()?.translationY(-dp(0.5f).toFloat())?.setDuration(90)?.withEndAction {
             body?.animate()?.translationY(0f)?.setDuration(150)?.start()
         }?.start()
     }
