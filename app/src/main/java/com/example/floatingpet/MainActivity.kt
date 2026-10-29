@@ -58,24 +58,6 @@ class MainActivity : Activity() {
         addSwitch(root, "位置调整模式", "开启后拖动桌宠移动位置；关闭后触摸用于互动", prefs.getBoolean("moveMode", false), mint) { save("moveMode", it); updatePet() }
         addSwitch(root, "锁定当前大小", "避免误操作调整尺寸", prefs.getBoolean("sizeLocked", false), pink) { save("sizeLocked", it); updatePet() }
 
-        section(root, "☁  自然待机动作", mint)
-        addHalfDpSlider(root, "身体呼吸幅度", prefs.getInt("breathAmpHalfDp", 6).coerceIn(1, 8), mint) { save("breathAmpHalfDp", it); updatePet() }
-        addSlider(root, "身体呼吸速度", 8, 16, prefs.getInt("breathSpeed", 14).coerceIn(8, 16), "", mint) { save("breathSpeed", it); updatePet() }
-        addHalfDpSlider(root, "头部呼吸幅度", prefs.getInt("headBreathAmpHalfDp", 4).coerceIn(1, 8), blue) { save("headBreathAmpHalfDp", it); updatePet() }
-        addSlider(root, "头部呼吸速度", 8, 20, prefs.getInt("headBreathSpeed", 20).coerceIn(8, 20), "", pink) { save("headBreathSpeed", it); updatePet() }
-
-        section(root, "♡  弹跳幅度调试", pink)
-        root.addView(TextView(this).apply {
-            text = "可以边拖动滑块边试点按或长按。单位为 dp；头身幅度尽量接近，避免视觉上分离。长按蓄力会在基础幅度上额外增加最多 2 dp。"
-            textSize = 12f; setTextColor(ink); setPadding(dp(14), dp(10), dp(14), dp(10)); background = rounded(Color.WHITE, pink, 1, 16)
-        }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(7) })
-        addHalfDpSlider(root, "点击：头部向上跳跃幅度", prefs.getInt("clickHeadJumpHalfDp", 12).coerceIn(4, 24), blue) { save("clickHeadJumpHalfDp", it); updatePet() }
-        addHalfDpSlider(root, "点击：身体向上跳跃幅度", prefs.getInt("clickBodyJumpHalfDp", 10).coerceIn(4, 24), mint) { save("clickBodyJumpHalfDp", it); updatePet() }
-        addHalfDpSlider(root, "长按蓄力：头部比身体额外下压", prefs.getInt("holdHeadDownExtraHalfDp", 3).coerceIn(0, 8), pink) { save("holdHeadDownExtraHalfDp", it); updatePet() }
-        addHalfDpSlider(root, "长按松手：头部向上弹跳幅度", prefs.getInt("holdHeadJumpHalfDp", 20).coerceIn(4, 28), pink) { save("holdHeadJumpHalfDp", it); updatePet() }
-        addHalfDpSlider(root, "长按松手：身体向上弹跳幅度", prefs.getInt("holdBodyJumpHalfDp", 18).coerceIn(4, 28), butter) { save("holdBodyJumpHalfDp", it); updatePet() }
-        addHalfDpSlider(root, "摸头：头部下压幅度", prefs.getInt("patHeadDownHalfDp", 4).coerceIn(0, 12), blue) { save("patHeadDownHalfDp", it); updatePet() }
-
         section(root, "♡  互动与声音", pink)
         addSwitch(root, "音乐联动", "自动跟随播放状态；未开启音频分析时使用柔和估算节奏", prefs.getBoolean("musicEnabled", true), blue) { save("musicEnabled", it); updatePet(); if (it) openMediaSettings() }
         root.addView(button("开启系统音频节拍捕获  ♫", blue) { requestSystemAudioCapture() }, fullWidth())
