@@ -356,9 +356,9 @@ class PetOverlayService : Service() {
 
     private fun beatPulse(realBeat: Boolean = false) {
         head?.animate()?.cancel()
-        val drop = if (realBeat) dp(3).toFloat() else dp(2).toFloat()
+        val drop = if (realBeat) dp(2.5f).toFloat() else dp(1.5f).toFloat()
         head?.animate()?.translationY(drop)?.rotation(2.2f)?.setDuration(85)?.withEndAction {
-            head?.animate()?.translationY(-dp(2).toFloat())?.rotation(-1.4f)?.setDuration(95)?.withEndAction {
+            head?.animate()?.translationY(-dp(1.5f).toFloat())?.rotation(-1.4f)?.setDuration(95)?.withEndAction {
                 head?.animate()?.translationY(0f)?.rotation(0f)?.setDuration(110)?.start()
             }?.start()
         }?.start()
