@@ -151,7 +151,7 @@ class PetOverlayService : Service() {
         wm = getSystemService(WINDOW_SERVICE) as WindowManager
         val size = prefs.getInt("size", 220)
         val type = if (Build.VERSION.SDK_INT >= 26) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY else WindowManager.LayoutParams.TYPE_PHONE
-        params = WindowManager.LayoutParams((size * 1.30f).toInt(), (size * 1.62f).toInt(), type, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN, PixelFormat.TRANSLUCENT).apply { gravity = Gravity.TOP or Gravity.START; x = 40; y = 100 }
+        params = WindowManager.LayoutParams((size * 1.30f).toInt(), (size * 1.62f).toInt() + dp(42), type, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN, PixelFormat.TRANSLUCENT).apply { gravity = Gravity.TOP or Gravity.START; x = 40; y = 100 }
         val frame = FrameLayout(this).apply { clipChildren = false; clipToPadding = false }
         body = ImageView(this).apply {
             // Fox branch uses exactly two visual layers: full figure as the base,
@@ -180,9 +180,9 @@ class PetOverlayService : Service() {
         }
         // The base layer is the complete figure; the only separate art layer is the foreground head.
         // Dialogue occupies a compact strip above the pet.
-        frame.addView(body, FrameLayout.LayoutParams((size * 1.18f).toInt(), (size * 1.52f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(2) })
-        frame.addView(head, FrameLayout.LayoutParams((size * .66f).toInt(), (size * .66f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = (size * .30f).toInt() })
-        frame.addView(speech, FrameLayout.LayoutParams((size * 1.26f).toInt().coerceAtMost((size * 1.28f).toInt()), -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(4) })
+        frame.addView(body, FrameLayout.LayoutParams((size * 1.18f).toInt(), (size * 1.52f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(42) })
+        frame.addView(head, FrameLayout.LayoutParams((size * .462f).toInt(), (size * .462f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(42) + (size * .30f).toInt() })
+        frame.addView(speech, FrameLayout.LayoutParams((size * 1.26f).toInt().coerceAtMost((size * 1.28f).toInt()), -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(2) })
         frame.setOnTouchListener { _, e ->
             when (e.action) {
                 MotionEvent.ACTION_DOWN -> {
@@ -268,15 +268,15 @@ class PetOverlayService : Service() {
         val frame = container ?: return
         val size = prefs.getInt("size", 220)
         moveMode = prefs.getBoolean("moveMode", false)
-        if (params.width != (size * 1.30f).toInt() || params.height != (size * 1.62f).toInt()) {
-            params.width = (size * 1.30f).toInt(); params.height = (size * 1.62f).toInt()
+        if (params.width != (size * 1.30f).toInt() || params.height != (size * 1.62f).toInt() + dp(42)) {
+            params.width = (size * 1.30f).toInt(); params.height = (size * 1.62f).toInt() + dp(42)
             try { wm.updateViewLayout(frame, params) } catch (_: Exception) {}
         }
         if (prefs.contains("petX")) params.x = prefs.getInt("petX", params.x)
         if (prefs.contains("petY")) params.y = prefs.getInt("petY", params.y)
-        body?.layoutParams = FrameLayout.LayoutParams((size * 1.18f).toInt(), (size * 1.52f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(2) }
-        head?.layoutParams = FrameLayout.LayoutParams((size * .66f).toInt(), (size * .66f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = (size * .30f).toInt() }
-        speech?.layoutParams = FrameLayout.LayoutParams((size * 1.26f).toInt(), -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(4) }
+        body?.layoutParams = FrameLayout.LayoutParams((size * 1.18f).toInt(), (size * 1.52f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(42) }
+        head?.layoutParams = FrameLayout.LayoutParams((size * .462f).toInt(), (size * .462f).toInt(), Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(42) + (size * .30f).toInt() }
+        speech?.layoutParams = FrameLayout.LayoutParams((size * 1.26f).toInt(), -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(2) }
         body?.requestLayout(); head?.requestLayout()
         try { wm.updateViewLayout(frame, params) } catch (_: Exception) {}
         bodyBreathAnimator?.cancel(); headBreathAnimator?.cancel(); idleAnimator?.cancel()
