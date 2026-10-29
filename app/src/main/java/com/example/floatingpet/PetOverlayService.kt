@@ -194,17 +194,14 @@ class PetOverlayService : Service() {
                             params.x = startX + dx.toInt(); params.y = startY + dy.toInt()
                             try { wm.updateViewLayout(frame, params) } catch (_: Exception) {}
                         } else {
-                            // Allow a clear downward petting motion while keeping the head
-                            // and torso moving together so the neck connection stays intact.
-                            val density = resources.displayMetrics.density
-                            val headX = (dx * .015f).coerceIn(-dp(2).toFloat(), dp(2).toFloat())
-                            val headY = (dy * .035f).coerceIn(-dp(2).toFloat(), dp(9).toFloat())
-                            val headTilt = (dx / 24f).coerceIn(-4.5f, 4.5f)
-                            head?.rotation = headTilt
+                            // Restore the original head-follow gesture and use asymmetric,
+                            // subtle torso compensation only: more on downward petting, very little upward.
+                            val headX = (dx * .02f).coerceIn(-dp(3).toFloat(), dp(3).toFloat())
+                            val headY = (dy * .015f).coerceIn(-dp(2).toFloat(), dp(2).toFloat())
+                            head?.rotation = (dx / 18f).coerceIn(-7f, 7f)
                             head?.translationX = headX
                             head?.translationY = headY
-                            body?.translationX = headX * .35f
-                            body?.translationY = headY * .88f
+                            body?.translationY = if (headY > 0f) headY * .35f else headY * .06f
                         }
                     }
                     true
